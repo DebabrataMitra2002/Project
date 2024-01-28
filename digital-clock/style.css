@@ -1,0 +1,53 @@
+html, body {
+  height: 100%;
+  width: 100%;
+  background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT28G07d3FvWaMHZ6BpUmnbQC-2XS1VAJS2fA&usqp=CAU');
+background-repeat: no-repeat;
+  background-size:1920px 1080px;
+  
+   font-family: Arial, Helvetica, sans-serif;
+  text-align: center;
+  text-size-adjust: 20px;
+  color: #ffffff;
+}
+button{
+  background-color: #a2e60f;
+  margin: 0%;
+}
+@media only screen and (max-width: 600px) {
+  body {
+    background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT28G07d3FvWaMHZ6BpUmnbQC-2XS1VAJS2fA&usqp=CAU');
+    background-repeat: no-repeat;
+  background-size:414px 736px;
+    
+  }
+  }
+@media only screen and (max-width: 400px) {
+  body {
+    background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT28G07d3FvWaMHZ6BpUmnbQC-2XS1VAJS2fA&usqp=CAU');
+    background-repeat: no-repeat;
+  background-size:360px 620px;
+    
+  }
+  
+  @media only screen and (max-width: 830px) {
+  body {
+    background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT28G07d3FvWaMHZ6BpUmnbQC-2XS1VAJS2fA&usqp=CAU');
+    background-repeat: no-repeat;
+  background-size:834px 1194px;
+    
+  }
+       @media only screen and (max-width: 300px) {
+  body {
+    background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT28G07d3FvWaMHZ6BpUmnbQC-2XS1VAJS2fA&usqp=CAU');
+    background-repeat: no-repeat;
+  background-size:295px;
+    
+  }
+                @media only screen and (max-width: 230px) {
+  body {
+    background-image: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT28G07d3FvWaMHZ6BpUmnbQC-2XS1VAJS2fA&usqp=CAU');
+    background-repeat: no-repeat;
+  background-size:220px;
+    
+  }
