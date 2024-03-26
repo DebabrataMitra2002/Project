@@ -17,18 +17,26 @@ def talk(text):
 
 
 def take_command():
+    command = ""
     try:
         with sr.Microphone() as source:
+            listener.adjust_for_ambient_noise(source)  # Adjust for ambient noise
             print('listening...')
-            voice = listener.listen(source)
-            command = listener.recognize_google(voice)
-            command = command.lower()
-            if 'Hey alexa' in command:
-                command = command.replace('alexa', '')
-                print(command)
-    except:
-        pass
+            while True:
+                audio = listener.listen(source)
+                try:
+                    command = listener.recognize_google(audio).lower()
+                    print("You said: " + command)
+                    if 'hey alexa' in command:
+                        command = command.replace('hey alexa', '')  # Remove wake word
+                        break  # Exit loop when wake word is detected
+                except sr.UnknownValueError:
+                    print("Sorry, I didn't catch that. Please say 'Hey Alexa' again.")
+    except sr.RequestError:
+        print("Sorry, there was an issue with the speech recognition service.")
     return command
+
+
 
 
 def run_alexa():
@@ -41,8 +49,8 @@ def run_alexa():
     elif 'time' in command:
         time = datetime.datetime.now().strftime('%I:%M %p')
         talk('Current time is ' + time)
-    elif 'who the heck is' in command:
-        person = command.replace('who the heck is', '')
+    elif 'who is' in command:
+        person = command.replace('who is', '')
         info = wikipedia.summary(person, 1)
         print(info)
         talk(info)
