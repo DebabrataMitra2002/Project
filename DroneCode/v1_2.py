@@ -7,11 +7,15 @@ import folium
 import os
 import threading
 import requests
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.service import Service as DriverService
 
 # Constants
-CHROME_DRIVER_PATH = '/path/to/chromedriver'  # Update this with the path to ChromeDriver
+CHROME_DRIVER_PATH = r'C:\Users\debab\chromedriver-win64\chromedriver.exe'  # Update this with the path to ChromeDriver
 MAP_HTML = "drone_map.html"
-UPDATE_INTERVAL = 1 # seconds
+UPDATE_INTERVAL = 1  # seconds
 MAP_SERVER_URL = "http://localhost:5000/update_location"
 
 class DroneControlGUI:
@@ -196,8 +200,8 @@ class DroneControlGUI:
             self.update_map(location.lat, location.lon)
             
             # Initialize Selenium WebDriver to open the map
-            service = service(CHROME_DRIVER_PATH)
-            driver = driver.Chrome(service=service)
+            service = Service(CHROME_DRIVER_PATH)
+            driver =webdriver.Chrome(service=service)
             driver.get(f"file://{os.path.abspath(MAP_HTML)}")
             
             # Create an HTTP server for receiving location data

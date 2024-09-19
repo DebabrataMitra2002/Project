@@ -6,6 +6,7 @@ import os
 import threading
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
+import argparse
 
 # Function to create and update the Google Map
 def update_map(lat, lon):
@@ -15,13 +16,20 @@ def update_map(lat, lon):
 
 # Function to open the map in a web browser
 def open_map():
-    chrome_driver_path = 'C:\Program Files\chrome-win64\chrome-win64'  # Update this with the path to ChromeDriver
+    chrome_driver_path = r'C:\Users\debab\chromedriver-win64\chromedriver.exe'  # Update this with the path to ChromeDriver
     service = Service(chrome_driver_path)
     browser = webdriver.Chrome(service=service)
     browser.get(f"file://{os.getcwd()}/drone_map.html")
 
 # Connect to the vehicle (replace with your drone's connection string)
-# vehicle = connect('127.0.0.1:14550', wait_ready=True)
+def connect_to_vehicle():
+    parser = argparse.ArgumentParser()
+    # parser.add_argument('--connect', default='127.0.0.1:14550')
+    # args = parser.parse_args()
+
+    # print(f"Connecting to vehicle on: {args.connect}")
+    # vehicle = connect(args.connect, baud=921600, wait_ready=True)
+    # return vehicle
 
 # Function to track the drone's real-time location and update the map
 def track_drone():
@@ -129,6 +137,9 @@ rtl_button.grid(row=6, column=1, padx=10, pady=5)
 # Button to open the map
 map_button = tk.Button(window, text="Open Real-Time Map", command=open_map, bg="darkblue", fg="white", font=("Helvetica", 12))
 map_button.grid(row=7, column=1, pady=10)
+
+# Connect to the vehicle
+vehicle = connect_to_vehicle()
 
 # Start a separate thread to track the drone's location in real time
 tracking_thread = threading.Thread(target=track_drone)
