@@ -15,13 +15,13 @@ def update_map(lat, lon):
 
 # Function to open the map in a web browser
 def open_map():
-    chrome_driver_path = '/path/to/chromedriver'  # Update this with the path to ChromeDriver
+    chrome_driver_path = 'C:\Program Files\chrome-win64\chrome-win64'  # Update this with the path to ChromeDriver
     service = Service(chrome_driver_path)
     browser = webdriver.Chrome(service=service)
     browser.get(f"file://{os.getcwd()}/drone_map.html")
 
 # Connect to the vehicle (replace with your drone's connection string)
-vehicle = connect('127.0.0.1:14550', wait_ready=True)
+# vehicle = connect('127.0.0.1:14550', wait_ready=True)
 
 # Function to track the drone's real-time location and update the map
 def track_drone():
