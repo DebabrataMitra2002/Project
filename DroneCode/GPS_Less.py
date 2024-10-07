@@ -79,6 +79,13 @@ class DroneControlGUI:
         non_gps_rtl_button = tk.Button(control_frame, text="Non-GPS RTL", command=self.non_gps_rtl, bg="purple", fg="white", width=15)
         non_gps_rtl_button.grid(row=4, column=0, columnspan=2, pady=5)
 
+        # Additional Modes
+        alt_hold_button = tk.Button(control_frame, text="Altitude Hold", command=self.set_altitude_hold_mode, bg="lightblue", fg="black", width=15)
+        alt_hold_button.grid(row=5, column=0, columnspan=2, pady=5)
+
+        stabilize_button = tk.Button(control_frame, text="Stabilize Mode", command=self.set_stabilize_mode, bg="lightgreen", fg="black", width=15)
+        stabilize_button.grid(row=6, column=0, columnspan=2, pady=5)
+
         # Takeoff Button and Slider
         takeoff_frame = tk.Frame(self.master)
         takeoff_frame.pack(pady=20)
@@ -159,6 +166,16 @@ class DroneControlGUI:
         self.show_message("Info", "Switching to LOITER mode.")
         self.status_bar.config(text="Status: Switching to LOITER mode")
 
+    def set_altitude_hold_mode(self):
+        self.vehicle.mode = VehicleMode("ALT_HOLD")
+        self.show_message("Info", "Switching to ALT_HOLD mode.")
+        self.status_bar.config(text="Status: Switching to Altitude Hold mode")
+
+    def set_stabilize_mode(self):
+        self.vehicle.mode = VehicleMode("STABILIZE")
+        self.show_message("Info", "Switching to STABILIZE mode.")
+        self.status_bar.config(text="Status: Switching to Stabilize mode")
+
     def land_drone(self):
         self.vehicle.mode = VehicleMode("LAND")
         self.show_message("Info", "Switching to LAND mode.")
@@ -182,74 +199,59 @@ class DroneControlGUI:
             self.vehicle.simple_takeoff(altitude)
             self.show_message("Info", f"Taking off to {altitude} meters!")
             self.status_bar.config(text=f"Status: Taking off to {altitude} meters")
-        else:
-            self.show_message("Warning", "Drone is not armable. Check GPS and battery.")
-            self.status_bar.config(text="Status: Unable to takeoff. Drone is not armable.")
+            while True:
+                current_altitude = self.vehicle.location.global_relative_frame.alt
+                if current_altitude >= altitude * 0.95:  # 95% of target altitude
+                    break
+                time.sleep(1)
 
     def go_to_location(self):
-        try:
-            lat = float(self.lat_entry.get())
-            lon = float(self.lon_entry.get())
-            alt = float(self.alt_entry.get())
-            target_location = LocationGlobalRelative(lat, lon, alt)
-            self.vehicle.simple_goto(target_location)
-            self.show_message("Info", f"Going to Location: {lat}, {lon}, {alt} m")
-            self.status_bar.config(text=f"Status: Going to {lat}, {lon}, {alt} m")
-        except ValueError:
-            self.show_message("Error", "Invalid latitude, longitude, or altitude values.")
-            self.status_bar.config(text="Status: Invalid input")
+        lat = float(self.lat_entry.get())
+        lon = float(self.lon_entry.get())
+        alt = float(self.alt_entry.get())
+        point = LocationGlobalRelative(lat, lon, alt)
+        self.vehicle.simple_goto(point)
+        self.show_message("Info", f"Going to location: {lat}, {lon}, {alt}")
+        self.status_bar.config(text=f"Status: Going to location {lat}, {lon}, {alt}")
 
     def update_status(self):
-        try:
-            # Update GPS Satellites count
-            self.status_labels["GPS Satellites:"].config(text=str(self.vehicle.gps_0.satellites_visible))
-            
-            # Update Battery Level
-            battery_level = self.vehicle.battery.level if self.vehicle.battery else "N/A"
-            self.status_labels["Battery Level:"].config(text=f"{battery_level}%")
-            
-            # Update Current Mode
-            self.status_labels["Current Mode:"].config(text=self.vehicle.mode.name)
+        connection_status = f"Connected: {self.vehicle.is_armable}"
+        gps_satellites = f"GPS Satellites: {self.vehicle.satellites_visible}"
+        battery_level = f"Battery Level: {self.vehicle.battery.voltage}V"
+        current_mode = f"Current Mode: {self.vehicle.mode}"
+        drone_location = f"Drone Location: {self.vehicle.location.global_frame}"
+        altitude = f"Altitude (m): {self.vehicle.location.global_relative_frame.alt}"
+        distance_from_home = f"Distance from Home: {self.get_distance_metres(self.vehicle.location.global_frame, self.vehicle.home_location)}m"
 
-            # Update Drone Location
-            if self.vehicle.location.global_frame:
-                location = self.vehicle.location.global_frame
-                self.status_labels["Drone Location:"].config(text=f"Lat: {location.lat}, Lon: {location.lon}")
-                altitude = self.vehicle.location.global_relative_frame.alt
-                self.status_labels["Altitude (m):"].config(text=f"{altitude:.2f} m")
+        self.status_labels["Connection Status:"].config(text=connection_status)
+        self.status_labels["GPS Satellites:"].config(text=gps_satellites)
+        self.status_labels["Battery Level:"].config(text=battery_level)
+        self.status_labels["Current Mode:"].config(text=current_mode)
+        self.status_labels["Drone Location:"].config(text=drone_location)
+        self.status_labels["Altitude (m):"].config(text=altitude)
+        self.status_labels["Distance from Home:"].config(text=distance_from_home)
 
-                # Update Distance from Home
-                home_location = self.vehicle.home_location
-                if home_location:
-                    dist = self.get_distance(location, home_location)
-                    self.status_labels["Distance from Home:"].config(text=f"{dist:.2f} m")
-                else:
-                    self.status_labels["Distance from Home:"].config(text="N/A")
-            else:
-                self.status_labels["Drone Location:"].config(text="N/A")
-                self.status_labels["Altitude (m):"].config(text="N/A")
-
-        except Exception as e:
-            print(f"Error updating status: {e}")
-            for key in self.status_labels:
-                self.status_labels[key].config(text="Error")
-
-        # Schedule the next status update
         self.master.after(1000, self.update_status)
+
+    def get_distance_metres(self, aLocation1, aLocation2):
+        """
+        Returns the distance in meters between two LocationGlobal objects.
+        """
+        dlat = aLocation2.lat - aLocation1.lat
+        dlong = aLocation2.lon - aLocation1.lon
+        return (dlat**2 + dlong**2) ** 0.5 * 1.113195e5  # Approximate conversion to meters
 
     def track_position(self):
         while True:
-            if self.vehicle.location.global_frame:
-                path_log.append(self.vehicle.location.global_frame)
-            time.sleep(2)
+            # Store the current position in the path_log
+            current_location = self.vehicle.location.global_frame
+            path_log.append(current_location)
+            time.sleep(1)  # Update every second
 
     def show_message(self, title, message):
         messagebox.showinfo(title, message)
 
-    def get_distance(self, location1, location2):
-        return location1.get_distance(location2)
-
 if __name__ == "__main__":
     root = tk.Tk()
-    gui = DroneControlGUI(root, vehicle)
+    drone_gui = DroneControlGUI(root, vehicle)
     root.mainloop()
