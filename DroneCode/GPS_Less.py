@@ -131,7 +131,13 @@ class DroneControlGUI:
             "Connection Status:",
             "Current Mode:",
             "Drone Location:",
-            "Altitude (m):"
+            "Altitude (m):",
+            "Battery Level:",
+            "Distance to Home (m):",
+            "Pitch:",
+            "Roll:",
+            "Yaw:",
+            "Time to Fly (s):"
         ]
         
         # Display status side by side
@@ -233,6 +239,28 @@ class DroneControlGUI:
             self.status_labels["Drone Location:"].config(text=f"{self.vehicle.location.global_relative_frame.lat}, {self.vehicle.location.global_relative_frame.lon}")
         if self.vehicle.location.global_relative_frame.alt is not None:
             self.status_labels["Altitude (m):"].config(text=f"{self.vehicle.location.global_relative_frame.alt}")
+
+        # Update additional parameters
+        if self.vehicle.battery:
+            self.status_labels["Battery Level:"].config(text=f"{self.vehicle.battery.level}%")
+        if self.vehicle.home_location:
+            distance_to_home = self.vehicle.location.global_frame.distance_to(self.vehicle.home_location)
+            self.status_labels["Distance to Home (m):"].config(text=f"{distance_to_home:.2f} m")
+        else:
+            self.status_labels["Distance to Home (m):"].config(text="N/A")
+
+        # Assuming pitch, roll, and yaw are available in the vehicle
+        if hasattr(self.vehicle, 'attitude'):
+            self.status_labels["Pitch:"].config(text=f"{self.vehicle.attitude.pitch:.2f}")
+            self.status_labels["Roll:"].config(text=f"{self.vehicle.attitude.roll:.2f}")
+            self.status_labels["Yaw:"].config(text=f"{self.vehicle.attitude.yaw:.2f}")
+
+        # Estimate time to fly based on current altitude (simple approximation)
+        if self.vehicle.location.global_relative_frame.alt is not None:
+            time_to_fly = self.vehicle.location.global_relative_frame.alt / 2  # Example: 2 m/s descent rate
+            self.status_labels["Time to Fly (s):"].config(text=f"{time_to_fly:.2f} s")
+        else:
+            self.status_labels["Time to Fly (s):"].config(text="N/A")
 
         self.master.after(1000, self.update_status)
 
