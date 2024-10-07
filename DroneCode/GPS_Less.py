@@ -113,8 +113,9 @@ class DroneControlGUI:
         self.alt_entry = tk.Entry(location_frame)
         self.alt_entry.grid(row=2, column=1)
 
+        # Move the Go to Location button to the right side of the entries
         go_button = tk.Button(location_frame, text="Go to Location", command=self.go_to_location, bg="lime", width=15)
-        go_button.grid(row=3, columnspan=2, pady=5)
+        go_button.grid(row=3, column=2, padx=5, pady=5)
 
         # Status Display
         status_frame = tk.Frame(self.master)
@@ -195,7 +196,7 @@ class DroneControlGUI:
         if self.vehicle.is_armable:
             self.vehicle.simple_takeoff(altitude)
             self.show_message("Info", f"Taking off to {altitude} meters!")
-            self.status_bar.config(text=f"Status: Taking off to {altitude} meters")
+            self.status_bar.config(text=f"Status: Taking off to {altitude} meters!")
         else:
             self.show_message("Warning", "Drone is not armable. Check GPS and battery.")
             self.status_bar.config(text="Status: Drone Not Armable")
