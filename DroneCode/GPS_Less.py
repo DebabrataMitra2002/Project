@@ -17,6 +17,22 @@ vehicle = connect(args.connect, baud=921600, wait_ready=True)
 # Global path storage for non-GPS RTL
 path_log = []
 
+# PID controller class (for altitude or other potential features)
+class PIDController:
+    def __init__(self, kp, ki, kd):
+        self.kp = kp
+        self.ki = ki
+        self.kd = kd
+        self.prev_error = 0
+        self.integral = 0
+    
+    def calculate(self, setpoint, measured_value):
+        error = setpoint - measured_value
+        self.integral += error
+        derivative = error - self.prev_error
+        self.prev_error = error
+        return self.kp * error + self.ki * self.integral + self.kd * derivative
+
 # Main GUI class
 class DroneControlGUI:
     def __init__(self, master, vehicle):
@@ -63,11 +79,11 @@ class DroneControlGUI:
         non_gps_rtl_button = tk.Button(control_frame, text="Non-GPS RTL", command=self.non_gps_rtl, bg="purple", fg="white", width=15)
         non_gps_rtl_button.grid(row=4, column=0, columnspan=2, pady=5)
 
-        # Additional Modes
-        alt_hold_button = tk.Button(control_frame, text="Altitude Hold", command=self.set_altitude_hold_mode, bg="lightblue", fg="black", width=15)
+        # Add Alt Hold and Stabilize Mode buttons
+        alt_hold_button = tk.Button(control_frame, text="Alt Hold Mode", command=self.set_alt_hold_mode, bg="pink", fg="black", width=15)
         alt_hold_button.grid(row=5, column=0, columnspan=2, pady=5)
 
-        stabilize_button = tk.Button(control_frame, text="Stabilize Mode", command=self.set_stabilize_mode, bg="lightgreen", fg="black", width=15)
+        stabilize_button = tk.Button(control_frame, text="Stabilize Mode", command=self.set_stabilize_mode, bg="cyan", fg="black", width=15)
         stabilize_button.grid(row=6, column=0, columnspan=2, pady=5)
 
         # Takeoff Button and Slider
@@ -107,12 +123,9 @@ class DroneControlGUI:
         self.status_labels = {}
         status_items = [
             "Connection Status:",
-            "GPS Satellites:",
-            "Battery Level:",
             "Current Mode:",
             "Drone Location:",
-            "Altitude (m):",
-            "Distance from Home:"
+            "Altitude (m):"
         ]
         for item in status_items:
             label = tk.Label(status_frame, text=item, font=('Arial', 10, 'bold'))
@@ -150,16 +163,6 @@ class DroneControlGUI:
         self.show_message("Info", "Switching to LOITER mode.")
         self.status_bar.config(text="Status: Switching to LOITER mode")
 
-    def set_altitude_hold_mode(self):
-        self.vehicle.mode = VehicleMode("ALT_HOLD")
-        self.show_message("Info", "Switching to ALT_HOLD mode.")
-        self.status_bar.config(text="Status: Switching to Altitude Hold mode")
-
-    def set_stabilize_mode(self):
-        self.vehicle.mode = VehicleMode("STABILIZE")
-        self.show_message("Info", "Switching to STABILIZE mode.")
-        self.status_bar.config(text="Status: Switching to Stabilize mode")
-
     def land_drone(self):
         self.vehicle.mode = VehicleMode("LAND")
         self.show_message("Info", "Switching to LAND mode.")
@@ -177,65 +180,62 @@ class DroneControlGUI:
             self.show_message("Warning", "No path data available for Non-GPS RTL.")
             self.status_bar.config(text="Status: No path data for Non-GPS RTL")
 
+    def set_alt_hold_mode(self):
+        self.vehicle.mode = VehicleMode("ALT_HOLD")
+        self.show_message("Info", "Switching to Alt Hold mode.")
+        self.status_bar.config(text="Status: Switching to Alt Hold mode")
+
+    def set_stabilize_mode(self):
+        self.vehicle.mode = VehicleMode("STABILIZE")
+        self.show_message("Info", "Switching to Stabilize mode.")
+        self.status_bar.config(text="Status: Switching to Stabilize mode")
+
     def takeoff_drone(self):
         altitude = self.altitude_slider.get()
         if self.vehicle.is_armable:
             self.vehicle.simple_takeoff(altitude)
             self.show_message("Info", f"Taking off to {altitude} meters!")
             self.status_bar.config(text=f"Status: Taking off to {altitude} meters")
-            while True:
-                current_altitude = self.vehicle.location.global_relative_frame.alt
-                if current_altitude >= altitude * 0.95:  # 95% of target altitude
-                    break
-                time.sleep(1)
+        else:
+            self.show_message("Warning", "Drone is not armable. Check GPS and battery.")
+            self.status_bar.config(text="Status: Drone Not Armable")
 
     def go_to_location(self):
-        lat = float(self.lat_entry.get())
-        lon = float(self.lon_entry.get())
-        alt = float(self.alt_entry.get())
-        point = LocationGlobalRelative(lat, lon, alt)
-        self.vehicle.simple_goto(point)
-        self.show_message("Info", f"Going to location: {lat}, {lon}, {alt}")
-        self.status_bar.config(text=f"Status: Going to location {lat}, {lon}, {alt}")
+        try:
+            lat = float(self.lat_entry.get())
+            lon = float(self.lon_entry.get())
+            alt = float(self.alt_entry.get())
+            target_location = LocationGlobalRelative(lat, lon, alt)
+            self.vehicle.simple_goto(target_location)
+            self.show_message("Info", f"Going to Location: ({lat}, {lon}, {alt})")
+            self.status_bar.config(text=f"Status: Going to Location: ({lat}, {lon}, {alt})")
+            path_log.append(target_location)  # Log path for non-GPS RTL
+        except ValueError:
+            self.show_message("Error", "Invalid coordinates entered.")
 
     def update_status(self):
-        connection_status = f"Connected: {self.vehicle.is_armable}"
-        gps_satellites = f"GPS Satellites: {self.vehicle.gps_0.satellites_visible}"  # Corrected line
-        battery_level = f"Battery Level: {self.vehicle.battery.voltage}V"
-        current_mode = f"Current Mode: {self.vehicle.mode}"
-        drone_location = f"Drone Location: {self.vehicle.location.global_frame}"
-        altitude = f"Altitude (m): {self.vehicle.location.global_relative_frame.alt}"
-        distance_from_home = f"Distance from Home: {self.get_distance_metres(self.vehicle.location.global_frame, self.vehicle.home_location)}m"
-
-        self.status_labels["Connection Status:"].config(text=connection_status)
-        self.status_labels["GPS Satellites:"].config(text=gps_satellites)
-        self.status_labels["Battery Level:"].config(text=battery_level)
-        self.status_labels["Current Mode:"].config(text=current_mode)
-        self.status_labels["Drone Location:"].config(text=drone_location)
-        self.status_labels["Altitude (m):"].config(text=altitude)
-        self.status_labels["Distance from Home:"].config(text=distance_from_home)
+        # Update status every 1000ms
+        if self.vehicle.mode.name:
+            self.status_labels["Current Mode:"].config(text=self.vehicle.mode.name)
+        if self.vehicle.location.global_relative_frame:
+            self.status_labels["Drone Location:"].config(text=f"{self.vehicle.location.global_relative_frame.lat}, {self.vehicle.location.global_relative_frame.lon}")
+        if self.vehicle.location.global_relative_frame.alt is not None:
+            self.status_labels["Altitude (m):"].config(text=f"{self.vehicle.location.global_relative_frame.alt}")
 
         self.master.after(1000, self.update_status)
 
-    def get_distance_metres(self, aLocation1, aLocation2):
-        """
-        Returns the distance in meters between two LocationGlobal objects.
-        """
-        dlat = aLocation2.lat - aLocation1.lat
-        dlong = aLocation2.lon - aLocation1.lon
-        return (dlat**2 + dlong**2) ** 0.5 * 1.113195e5  # Approximate conversion to meters
-
     def track_position(self):
         while True:
-            # Store the current position in the path_log
-            current_location = self.vehicle.location.global_frame
-            path_log.append(current_location)
-            time.sleep(1)  # Update every second
+            time.sleep(1)  # Run tracking logic every second
 
     def show_message(self, title, message):
         messagebox.showinfo(title, message)
 
+# Initialize and run the GUI
 if __name__ == "__main__":
     root = tk.Tk()
-    drone_gui = DroneControlGUI(root, vehicle)
+    app = DroneControlGUI(root, vehicle)
     root.mainloop()
+
+    # Close the vehicle connection
+    vehicle.close()
