@@ -57,10 +57,15 @@ class DroneControlGUI:
         self.tracking_thread.start()
 
     def create_widgets(self):
-        # Control Buttons
-        control_frame = tk.Frame(self.master)
-        control_frame.pack(pady=10)
+        # Create a frame for buttons and go to location section
+        main_frame = tk.Frame(self.master)
+        main_frame.pack(pady=10)
 
+        # Control Buttons Frame
+        control_frame = tk.Frame(main_frame)
+        control_frame.pack(side=tk.LEFT, padx=20)
+
+        # Control Buttons
         arm_button = tk.Button(control_frame, text="ARM", command=self.arm_drone, bg="green", fg="white", width=10)
         arm_button.grid(row=0, column=0, padx=5)
 
@@ -87,8 +92,8 @@ class DroneControlGUI:
         stabilize_button.grid(row=6, column=0, columnspan=2, pady=5)
 
         # Takeoff Button and Slider
-        takeoff_frame = tk.Frame(self.master)
-        takeoff_frame.pack(pady=20)
+        takeoff_frame = tk.Frame(control_frame)
+        takeoff_frame.grid(row=7, column=0, columnspan=2, pady=20)
         
         self.altitude_slider = tk.Scale(takeoff_frame, from_=0, to=70, orient=tk.HORIZONTAL, label="Takeoff Altitude (m)", length=300)
         self.altitude_slider.set(0)  # Default altitude 0m
@@ -97,9 +102,9 @@ class DroneControlGUI:
         takeoff_button = tk.Button(takeoff_frame, text="Takeoff", command=self.takeoff_drone, bg="cyan", fg="black", width=10)
         takeoff_button.pack(side=tk.LEFT)
 
-        # Go to Specific Location
-        location_frame = tk.Frame(self.master)
-        location_frame.pack(pady=10)
+        # Go to Specific Location Section
+        location_frame = tk.Frame(main_frame)
+        location_frame.pack(side=tk.LEFT, padx=20)
 
         tk.Label(location_frame, text="Lat:").grid(row=0, column=0)
         self.lat_entry = tk.Entry(location_frame)
@@ -113,9 +118,9 @@ class DroneControlGUI:
         self.alt_entry = tk.Entry(location_frame)
         self.alt_entry.grid(row=2, column=1)
 
-        # Move the Go to Location button to the right side of the entries
+        # Go to Location button
         go_button = tk.Button(location_frame, text="Go to Location", command=self.go_to_location, bg="lime", width=15)
-        go_button.grid(row=3, column=2, padx=5, pady=5)
+        go_button.grid(row=3, column=1, padx=5, pady=5)
 
         # Status Display
         status_frame = tk.Frame(self.master)
@@ -194,7 +199,11 @@ class DroneControlGUI:
     def takeoff_drone(self):
         altitude = self.altitude_slider.get()
         if self.vehicle.is_armable:
-            self.vehicle.simple_takeoff(altitude)
+            self.vehicle.mode = VehicleMode("GUIDED")
+            self.vehicle.armed = True
+            while not self.vehicle.armed:
+                time.sleep(1)
+            self.vehicle.simple_takeoff(altitude)  # Take off to target altitude
             self.show_message("Info", f"Taking off to {altitude} meters!")
             self.status_bar.config(text=f"Status: Taking off to {altitude} meters!")
         else:
