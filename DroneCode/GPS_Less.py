@@ -133,7 +133,6 @@ class DroneControlGUI:
             "Drone Location:",
             "Altitude (m):",
             "Battery Level:",
-            "Distance to Home (m):",
             "Pitch:",
             "Roll:",
             "Yaw:",
@@ -243,11 +242,6 @@ class DroneControlGUI:
         # Update additional parameters
         if self.vehicle.battery:
             self.status_labels["Battery Level:"].config(text=f"{self.vehicle.battery.level}%")
-        if self.vehicle.home_location:
-            distance_to_home = self.vehicle.location.global_frame.distance_to(self.vehicle.home_location)
-            self.status_labels["Distance to Home (m):"].config(text=f"{distance_to_home:.2f} m")
-        else:
-            self.status_labels["Distance to Home (m):"].config(text="N/A")
 
         # Assuming pitch, roll, and yaw are available in the vehicle
         if hasattr(self.vehicle, 'attitude'):
