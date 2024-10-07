@@ -17,22 +17,6 @@ vehicle = connect(args.connect, baud=921600, wait_ready=True)
 # Global path storage for non-GPS RTL
 path_log = []
 
-# PID controller class (for altitude or other potential features)
-class PIDController:
-    def __init__(self, kp, ki, kd):
-        self.kp = kp
-        self.ki = ki
-        self.kd = kd
-        self.prev_error = 0
-        self.integral = 0
-    
-    def calculate(self, setpoint, measured_value):
-        error = setpoint - measured_value
-        self.integral += error
-        derivative = error - self.prev_error
-        self.prev_error = error
-        return self.kp * error + self.ki * self.integral + self.kd * derivative
-
 # Main GUI class
 class DroneControlGUI:
     def __init__(self, master, vehicle):
@@ -216,7 +200,7 @@ class DroneControlGUI:
 
     def update_status(self):
         connection_status = f"Connected: {self.vehicle.is_armable}"
-        gps_satellites = f"GPS Satellites: {self.vehicle.satellites_visible}"
+        gps_satellites = f"GPS Satellites: {self.vehicle.gps_0.satellites_visible}"  # Corrected line
         battery_level = f"Battery Level: {self.vehicle.battery.voltage}V"
         current_mode = f"Current Mode: {self.vehicle.mode}"
         drone_location = f"Drone Location: {self.vehicle.location.global_frame}"
