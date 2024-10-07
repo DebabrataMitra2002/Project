@@ -39,7 +39,7 @@ class DroneControlGUI:
         self.master = master
         self.vehicle = vehicle
         master.title("Drone Control Center")
-        master.geometry("700x600")
+        master.geometry("600x500")  # Smaller screen size
 
         # Create the UI components
         self.create_widgets()
@@ -58,29 +58,29 @@ class DroneControlGUI:
         control_frame.pack(pady=10)
 
         arm_button = tk.Button(control_frame, text="ARM", command=self.arm_drone, bg="green", fg="white", width=15)
-        arm_button.grid(row=0, column=0, padx=10)
+        arm_button.grid(row=0, column=0, padx=10, pady=5)
 
         disarm_button = tk.Button(control_frame, text="DISARM", command=self.disarm_drone, bg="red", fg="white", width=15)
-        disarm_button.grid(row=0, column=1, padx=10)
+        disarm_button.grid(row=0, column=1, padx=10, pady=5)
 
-        rtl_button = tk.Button(control_frame, text="RTL (Return to Launch)", command=self.set_rtl_mode, bg="blue", fg="white", width=25)
-        rtl_button.grid(row=1, column=0, columnspan=2, pady=10)
+        rtl_button = tk.Button(control_frame, text="RTL", command=self.set_rtl_mode, bg="blue", fg="white", width=15)
+        rtl_button.grid(row=1, column=0, padx=10, pady=5)
 
-        loiter_button = tk.Button(control_frame, text="Loiter Mode", command=self.set_loiter_mode, bg="orange", fg="white", width=25)
-        loiter_button.grid(row=2, column=0, columnspan=2, pady=10)
+        loiter_button = tk.Button(control_frame, text="Loiter Mode", command=self.set_loiter_mode, bg="orange", fg="white", width=15)
+        loiter_button.grid(row=1, column=1, padx=10, pady=5)
 
-        land_button = tk.Button(control_frame, text="Land Mode", command=self.land_drone, bg="brown", fg="white", width=25)
-        land_button.grid(row=3, column=0, columnspan=2, pady=10)
+        land_button = tk.Button(control_frame, text="Land Mode", command=self.land_drone, bg="brown", fg="white", width=15)
+        land_button.grid(row=2, column=0, padx=10, pady=5)
 
-        non_gps_rtl_button = tk.Button(control_frame, text="Non-GPS RTL", command=self.non_gps_rtl, bg="purple", fg="white", width=25)
-        non_gps_rtl_button.grid(row=4, column=0, columnspan=2, pady=10)
+        non_gps_rtl_button = tk.Button(control_frame, text="Non-GPS RTL", command=self.non_gps_rtl, bg="purple", fg="white", width=15)
+        non_gps_rtl_button.grid(row=2, column=1, padx=10, pady=5)
 
         # New Buttons: Alt Hold and Brake Mode
-        alt_hold_button = tk.Button(control_frame, text="Alt Hold Mode", command=self.set_alt_hold_mode, bg="yellow", fg="black", width=25)
-        alt_hold_button.grid(row=5, column=0, columnspan=2, pady=10)
+        alt_hold_button = tk.Button(control_frame, text="Alt Hold Mode", command=self.set_alt_hold_mode, bg="yellow", fg="black", width=15)
+        alt_hold_button.grid(row=3, column=0, padx=10, pady=5)
 
-        brake_button = tk.Button(control_frame, text="Brake Mode", command=self.set_brake_mode, bg="darkred", fg="white", width=25)
-        brake_button.grid(row=6, column=0, columnspan=2, pady=10)
+        brake_button = tk.Button(control_frame, text="Brake Mode", command=self.set_brake_mode, bg="darkred", fg="white", width=15)
+        brake_button.grid(row=3, column=1, padx=10, pady=5)
 
         # Takeoff Button and Slider
         takeoff_frame = tk.Frame(self.master)
@@ -91,7 +91,7 @@ class DroneControlGUI:
         self.altitude_slider.pack(side=tk.LEFT, padx=10)
 
         takeoff_button = tk.Button(takeoff_frame, text="Takeoff", command=self.takeoff_drone, bg="cyan", fg="black", width=15)
-        takeoff_button.pack(side=tk.LEFT)
+        takeoff_button.pack(side=tk.LEFT, padx=10)
 
         # New Section: Go to Specific Location (Lat, Lon, Alt)
         location_frame = tk.Frame(self.master)
@@ -112,7 +112,7 @@ class DroneControlGUI:
         self.alt_entry = tk.Entry(location_frame)
         self.alt_entry.grid(row=2, column=1)
 
-        goto_button = tk.Button(location_frame, text="Go to Location", command=self.goto_location, bg="lightblue", width=25)
+        goto_button = tk.Button(location_frame, text="Go to Location", command=self.goto_location, bg="lightblue", width=15)
         goto_button.grid(row=3, column=0, columnspan=2, pady=10)
 
         # Status Display
@@ -194,7 +194,7 @@ class DroneControlGUI:
             alt = float(self.alt_entry.get())
             target_location = LocationGlobalRelative(lat, lon, alt)
             self.vehicle.simple_goto(target_location)
-            messagebox.showinfo("Info", f"Navigating to Lat: {lat}, Lon: {lon}, Alt: {alt}")
+            messagebox.showinfo("Info", f"Navigating to ({lat}, {lon}, {alt})")
             self.status_bar.config(text=f"Status: Navigating to ({lat}, {lon}, {alt})")
         except ValueError:
             messagebox.showwarning("Warning", "Invalid latitude, longitude, or altitude input.")
