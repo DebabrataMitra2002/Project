@@ -40,7 +40,7 @@ class DroneControlGUI:
     def __init__(self, master, vehicle):
         self.master = master
         self.vehicle = vehicle
-        master.title("Drone Control Center")
+        master.title("SAFE FLY")  # Set interface title
         master.geometry("600x500")  # Smaller screen size
 
         # Create the UI components
@@ -58,6 +58,10 @@ class DroneControlGUI:
         # Status Bar moved to top
         self.status_bar = tk.Label(self.master, text="Status: Ready", bd=1, relief=tk.SUNKEN, anchor=tk.W)
         self.status_bar.pack(side=tk.TOP, fill=tk.X)
+
+        # Title Label
+        title_label = tk.Label(self.master, text="SAFE FLY", font=("Helvetica", 16, "bold"))
+        title_label.pack(pady=10)
 
         # Control Buttons
         control_frame = tk.Frame(self.master)
