@@ -1,6 +1,6 @@
 import argparse
 import tkinter as tk
-from tkinter import messagebox, ttk
+from tkinter import messagebox
 from dronekit import connect, VehicleMode, LocationGlobalRelative
 import time
 import threading
@@ -39,7 +39,7 @@ class DroneControlGUI:
         self.master = master
         self.vehicle = vehicle
         master.title("SAFE FLY")  # Title of the interface
-        master.geometry("700x500")
+        master.geometry("600x400")  # Reduced canvas size
 
         # Status Bar
         self.status_bar = tk.Label(master, text="Status: Ready", bd=1, relief=tk.SUNKEN, anchor=tk.W)
@@ -94,8 +94,8 @@ class DroneControlGUI:
         # Takeoff Button and Slider
         takeoff_frame = tk.Frame(control_frame)
         takeoff_frame.grid(row=7, column=0, columnspan=2, pady=20)
-        
-        self.altitude_slider = tk.Scale(takeoff_frame, from_=0, to=70, orient=tk.HORIZONTAL, label="Takeoff Altitude (m)", length=300)
+
+        self.altitude_slider = tk.Scale(takeoff_frame, from_=0, to=70, orient=tk.HORIZONTAL, label="Takeoff Altitude (m)", length=200)
         self.altitude_slider.set(0)  # Default altitude 0m
         self.altitude_slider.pack(side=tk.LEFT, padx=10)
 
@@ -133,11 +133,13 @@ class DroneControlGUI:
             "Drone Location:",
             "Altitude (m):"
         ]
-        for item in status_items:
+        
+        # Display status side by side
+        for i, item in enumerate(status_items):
             label = tk.Label(status_frame, text=item, font=('Arial', 10, 'bold'))
-            label.pack(anchor="w")
+            label.grid(row=i, column=0, sticky="w")
             value = tk.Label(status_frame, text="N/A", font=('Arial', 10))
-            value.pack(anchor="w")
+            value.grid(row=i, column=1, sticky="w")
             self.status_labels[item] = value
 
     def arm_drone(self):
