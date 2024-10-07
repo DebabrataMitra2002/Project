@@ -4,6 +4,7 @@ from tkinter import messagebox
 from dronekit import connect, VehicleMode, LocationGlobalRelative
 import time
 import threading
+import math
 
 # Parse command-line arguments for vehicle connection
 parser = argparse.ArgumentParser()
@@ -16,6 +17,7 @@ vehicle = connect(args.connect, baud=921600, wait_ready=True)
 
 # Global path storage for non-GPS RTL
 path_log = []
+home_location = None
 
 # PID Controller Class for future use
 class PIDController:
@@ -53,6 +55,10 @@ class DroneControlGUI:
         self.tracking_thread.start()
 
     def create_widgets(self):
+        # Status Bar moved to top
+        self.status_bar = tk.Label(self.master, text="Status: Ready", bd=1, relief=tk.SUNKEN, anchor=tk.W)
+        self.status_bar.pack(side=tk.TOP, fill=tk.X)
+
         # Control Buttons
         control_frame = tk.Frame(self.master)
         control_frame.pack(pady=10)
@@ -86,8 +92,9 @@ class DroneControlGUI:
         takeoff_frame = tk.Frame(self.master)
         takeoff_frame.pack(pady=20)
 
-        self.altitude_slider = tk.Scale(takeoff_frame, from_=10, to=60, orient=tk.HORIZONTAL, label="Takeoff Altitude (m)", length=300)
-        self.altitude_slider.set(10)  # Default altitude 10m
+        # Updated altitude range: 0 to 70 meters
+        self.altitude_slider = tk.Scale(takeoff_frame, from_=0, to=70, orient=tk.HORIZONTAL, label="Takeoff Altitude (m)", length=300)
+        self.altitude_slider.set(0)  # Default altitude 0m
         self.altitude_slider.pack(side=tk.LEFT, padx=10)
 
         takeoff_button = tk.Button(takeoff_frame, text="Takeoff", command=self.takeoff_drone, bg="cyan", fg="black", width=15)
@@ -120,7 +127,7 @@ class DroneControlGUI:
         status_frame.pack(pady=10)
 
         self.status_labels = {}
-        status_items = ["Connection Status:", "GPS Status:", "Battery Level:", "Current Mode:", "Drone Location:"]
+        status_items = ["GPS Satellites:", "Battery Level:", "Current Mode:", "Drone Location:", "Altitude (m):", "Distance from Home:"]
         for item in status_items:
             label = tk.Label(status_frame, text=item, font=('Arial', 10, 'bold'))
             label.pack(anchor="w")
@@ -128,12 +135,10 @@ class DroneControlGUI:
             value.pack(anchor="w")
             self.status_labels[item] = value
 
-        # Status Bar
-        self.status_bar = tk.Label(self.master, text="Status: Ready", bd=1, relief=tk.SUNKEN, anchor=tk.W)
-        self.status_bar.pack(side=tk.BOTTOM, fill=tk.X)
-
     def arm_drone(self):
+        global home_location
         if self.vehicle.is_armable:
+            home_location = self.vehicle.location.global_frame  # Set home location at the moment of arming
             self.vehicle.mode = VehicleMode("GUIDED")
             self.vehicle.armed = True
             while not self.vehicle.armed:
@@ -179,13 +184,13 @@ class DroneControlGUI:
 
     def set_alt_hold_mode(self):
         self.vehicle.mode = VehicleMode("ALT_HOLD")
-        messagebox.showinfo("Info", "Switching to Alt Hold mode.")
-        self.status_bar.config(text="Status: Switching to Alt Hold mode")
+        messagebox.showinfo("Info", "Switching to ALT HOLD mode.")
+        self.status_bar.config(text="Status: Switching to ALT HOLD mode")
 
     def set_brake_mode(self):
         self.vehicle.mode = VehicleMode("BRAKE")
-        messagebox.showinfo("Info", "Activating Brake mode.")
-        self.status_bar.config(text="Status: Activating Brake mode")
+        messagebox.showinfo("Info", "Switching to BRAKE mode.")
+        self.status_bar.config(text="Status: Switching to BRAKE mode")
 
     def goto_location(self):
         try:
@@ -218,18 +223,37 @@ class DroneControlGUI:
             time.sleep(5)
 
     def update_status(self):
-        self.status_labels["Connection Status:"].config(text="Connected" if self.vehicle else "Disconnected")
-        self.status_labels["GPS Status:"].config(text=str(self.vehicle.gps_0.fix_type))
+        self.status_labels["GPS Satellites:"].config(text=str(self.vehicle.gps_0.satellites_visible))
         self.status_labels["Battery Level:"].config(text=str(self.vehicle.battery.level) + "%")
         self.status_labels["Current Mode:"].config(text=self.vehicle.mode.name)
+        
         if self.vehicle.location.global_frame:
             location = self.vehicle.location.global_frame
             self.status_labels["Drone Location:"].config(text=f"Lat: {location.lat}, Lon: {location.lon}")
+            altitude = self.vehicle.location.global_relative_frame.alt
+            self.status_labels["Altitude (m):"].config(text=f"{altitude:.2f} m")
+
+            if home_location:
+                dist = self.get_distance(location, home_location)
+                self.status_labels["Distance from Home:"].config(text=f"{dist:.2f} m")
         else:
             self.status_labels["Drone Location:"].config(text="N/A")
+            self.status_labels["Altitude (m):"].config(text="N/A")
+            self.status_labels["Distance from Home:"].config(text="N/A")
 
         # Schedule the next status update
         self.master.after(1000, self.update_status)
+
+    def get_distance(self, loc1, loc2):
+        R = 6371000  # Radius of the Earth in meters
+        lat1 = math.radians(loc1.lat)
+        lat2 = math.radians(loc2.lat)
+        dlat = math.radians(loc2.lat - loc1.lat)
+        dlon = math.radians(loc2.lon - loc1.lon)
+
+        a = math.sin(dlat/2) * math.sin(dlat/2) + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2) * math.sin(dlon/2)
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+        return R * c
 
 # Main function to launch the GUI
 def main():
