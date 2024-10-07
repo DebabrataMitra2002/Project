@@ -39,7 +39,7 @@ class DroneControlGUI:
         self.master = master
         self.vehicle = vehicle
         master.title("SAFE FLY")  # Title of the interface
-        master.geometry("600x400")  # Reduced canvas size
+        master.geometry("800x400")  # Reduced canvas size for better layout
 
         # Status Bar
         self.status_bar = tk.Label(master, text="Status: Ready", bd=1, relief=tk.SUNKEN, anchor=tk.W)
@@ -123,8 +123,8 @@ class DroneControlGUI:
         go_button.grid(row=3, column=1, padx=5, pady=5)
 
         # Status Display
-        status_frame = tk.Frame(self.master)
-        status_frame.pack(pady=10)
+        status_frame = tk.Frame(main_frame)
+        status_frame.pack(side=tk.LEFT, padx=20)
 
         self.status_labels = {}
         status_items = [
