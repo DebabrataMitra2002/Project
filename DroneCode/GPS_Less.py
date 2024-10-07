@@ -135,6 +135,11 @@ class DroneControlGUI:
             value.pack(anchor="w")
             self.status_labels[item] = value
 
+    def log_message(self, message):
+        """Display a message box for terminal output."""
+        messagebox.showinfo("Message", message)
+        print(message)  # Optionally print to the console as well
+
     def arm_drone(self):
         global home_location
         if self.vehicle.is_armable:
@@ -143,53 +148,53 @@ class DroneControlGUI:
             self.vehicle.armed = True
             while not self.vehicle.armed:
                 time.sleep(1)
-            messagebox.showinfo("Info", "Drone armed!")
+            self.log_message("Drone armed!")
             self.status_bar.config(text="Status: Drone Armed")
         else:
-            messagebox.showwarning("Warning", "Drone is not armable. Check GPS and battery.")
+            self.log_message("Warning: Drone is not armable. Check GPS and battery.")
             self.status_bar.config(text="Status: Drone Not Armable")
 
     def disarm_drone(self):
         self.vehicle.armed = False
         while self.vehicle.armed:
             time.sleep(1)
-        messagebox.showinfo("Info", "Drone disarmed!")
+        self.log_message("Drone disarmed!")
         self.status_bar.config(text="Status: Drone Disarmed")
 
     def set_rtl_mode(self):
         self.vehicle.mode = VehicleMode("RTL")
-        messagebox.showinfo("Info", "Switching to RTL (Return to Launch) mode.")
+        self.log_message("Switching to RTL (Return to Launch) mode.")
         self.status_bar.config(text="Status: Switching to RTL mode")
 
     def set_loiter_mode(self):
         self.vehicle.mode = VehicleMode("LOITER")
-        messagebox.showinfo("Info", "Switching to LOITER mode.")
+        self.log_message("Switching to LOITER mode.")
         self.status_bar.config(text="Status: Switching to LOITER mode")
 
     def land_drone(self):
         self.vehicle.mode = VehicleMode("LAND")
-        messagebox.showinfo("Info", "Switching to LAND mode.")
+        self.log_message("Switching to LAND mode.")
         self.status_bar.config(text="Status: Switching to LAND mode")
 
     def non_gps_rtl(self):
         if path_log:
-            messagebox.showinfo("Info", "Non-GPS RTL activated.")
+            self.log_message("Non-GPS RTL activated.")
             self.status_bar.config(text="Status: Non-GPS RTL activated")
             for location in reversed(path_log):
                 self.vehicle.simple_goto(location)
                 time.sleep(2)
         else:
-            messagebox.showwarning("Warning", "No path data available for Non-GPS RTL.")
+            self.log_message("Warning: No path data available for Non-GPS RTL.")
             self.status_bar.config(text="Status: No path data for Non-GPS RTL")
 
     def set_alt_hold_mode(self):
         self.vehicle.mode = VehicleMode("ALT_HOLD")
-        messagebox.showinfo("Info", "Switching to ALT HOLD mode.")
+        self.log_message("Switching to ALT HOLD mode.")
         self.status_bar.config(text="Status: Switching to ALT HOLD mode")
 
     def set_brake_mode(self):
         self.vehicle.mode = VehicleMode("BRAKE")
-        messagebox.showinfo("Info", "Switching to BRAKE mode.")
+        self.log_message("Switching to BRAKE mode.")
         self.status_bar.config(text="Status: Switching to BRAKE mode")
 
     def goto_location(self):
@@ -199,20 +204,20 @@ class DroneControlGUI:
             alt = float(self.alt_entry.get())
             target_location = LocationGlobalRelative(lat, lon, alt)
             self.vehicle.simple_goto(target_location)
-            messagebox.showinfo("Info", f"Navigating to ({lat}, {lon}, {alt})")
+            self.log_message(f"Navigating to ({lat}, {lon}, {alt})")
             self.status_bar.config(text=f"Status: Navigating to ({lat}, {lon}, {alt})")
         except ValueError:
-            messagebox.showwarning("Warning", "Invalid latitude, longitude, or altitude input.")
+            self.log_message("Warning: Invalid latitude, longitude, or altitude input.")
             self.status_bar.config(text="Status: Invalid Location Input")
 
     def takeoff_drone(self):
         altitude = self.altitude_slider.get()
         if self.vehicle.is_armable:
             self.vehicle.simple_takeoff(altitude)
-            messagebox.showinfo("Info", f"Taking off to {altitude} meters!")
+            self.log_message(f"Taking off to {altitude} meters!")
             self.status_bar.config(text=f"Status: Taking off to {altitude} meters")
         else:
-            messagebox.showwarning("Warning", "Drone is not armable. Check GPS and battery.")
+            self.log_message("Warning: Drone is not armable. Check GPS and battery.")
             self.status_bar.config(text="Status: Unable to takeoff. Drone is not armable.")
 
     def track_position(self):
@@ -226,7 +231,7 @@ class DroneControlGUI:
         self.status_labels["GPS Satellites:"].config(text=str(self.vehicle.gps_0.satellites_visible))
         self.status_labels["Battery Level:"].config(text=str(self.vehicle.battery.level) + "%")
         self.status_labels["Current Mode:"].config(text=self.vehicle.mode.name)
-        
+
         if self.vehicle.location.global_frame:
             location = self.vehicle.location.global_frame
             self.status_labels["Drone Location:"].config(text=f"Lat: {location.lat}, Lon: {location.lon}")
