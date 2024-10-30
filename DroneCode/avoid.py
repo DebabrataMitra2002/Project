@@ -165,6 +165,22 @@ class DroneControlGUI:
         self.avoidance_mode_button = tk.Button(control_frame, text="Enable Avoidance", command=self.toggle_avoidance_mode, bg="lightblue", width=15)
         self.avoidance_mode_button.grid(row=6, column=0, columnspan=2, pady=5)
 
+        stabilize_button = tk.Button(control_frame, text="Stabilize Mode", command=self.set_stabilize_mode, bg="purple", fg="white", width=15)
+        stabilize_button.grid(row=7, column=0, columnspan=2, pady=5)
+
+        smart_rtl_button = tk.Button(control_frame, text="Smart RTL", command=self.set_smart_rtl_mode, bg="yellow", fg="black", width=15)
+        smart_rtl_button.grid(row=8, column=0, columnspan=2, pady=5)
+
+        # Add ATHOLD mode button
+        athold_button = tk.Button(control_frame, text="ATHOLD Mode", command=self.set_athold_mode, bg="purple", fg="white", width=15)
+        athold_button.grid(row=9, column=0, columnspan=2, pady=5)
+
+        # Add BREAK mode button
+        break_button = tk.Button(control_frame, text="BREAK Mode", command=self.set_break_mode, bg="gray", fg="white", width=15)
+        break_button.grid(row=10, column=0, columnspan=2, pady=5)
+
+
+
         # Status Display
         status_frame = tk.Frame(main_frame)
         status_frame.pack(side=tk.LEFT, padx=20)
@@ -228,6 +244,28 @@ class DroneControlGUI:
         self.vehicle.mode = VehicleMode("GUIDED")
         self.vehicle.simple_takeoff(altitude)  # Take off to target altitude
         self.show_message("Info", f"Taking off to {altitude} meters.")
+
+    def set_stabilize_mode(self):
+      self.vehicle.mode = VehicleMode("STABILIZE")
+      self.show_message("Info", "Switching to Stabilize mode.")
+      self.status_bar.config(text="Status: Stabilize Mode")
+
+    def set_smart_rtl_mode(self):
+      self.vehicle.mode = VehicleMode("SMART_RTL")
+      self.show_message("Info", "Switching to Smart RTL mode.")
+      self.status_bar.config(text="Status: Smart RTL Mode")
+
+    def set_athold_mode(self):
+      self.vehicle.mode = VehicleMode("ALT_HOLD")
+      self.show_message("Info", "Switching to ALT HOLD (ATHOLD) mode.")
+      self.status_bar.config(text="Status: ALT HOLD Mode")
+
+    def set_break_mode(self):
+      self.vehicle.mode = VehicleMode("BRAKE")
+      self.show_message("Info", "Switching to BRAKE mode.")
+      self.status_bar.config(text="Status: BRAKE Mode")
+
+
 
     def update_status(self):
         # Update GUI with drone status information
