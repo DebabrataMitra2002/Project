@@ -275,7 +275,7 @@ class DroneControlGUI:
             # Update obstacle status in the GUI
             self.status_labels["Obstacle Status:"].config(text=obstacle_status)
 
-        time.sleep(0.5)  # Wait half a second before the next check
+        time.sleep(0.3)  # Wait half a second before the next check
 
 
     def show_message(self, title, message):
