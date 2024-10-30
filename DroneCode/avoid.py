@@ -17,9 +17,9 @@ args = parser.parse_args()
 
 # GPIO setup for HC-SR04 on multiple directions (front, back, left, right)
 FRONT_TRIG, FRONT_ECHO = 5, 24
-BACK_TRIG, BACK_ECHO = 5, 26
-LEFT_TRIG, LEFT_ECHO = 5, 28
-RIGHT_TRIG, RIGHT_ECHO = 5, 30
+BACK_TRIG, BACK_ECHO = 6 , 26
+LEFT_TRIG, LEFT_ECHO = 19, 27
+RIGHT_TRIG, RIGHT_ECHO =23 , 22
 
 # Setup for front sensor
 front_trigger = DigitalOutputDevice(FRONT_TRIG)
@@ -249,9 +249,10 @@ class DroneControlGUI:
     
     def obstacle_avoidance_system(self):
      while True:
-        if self.obstacle_prevent_enabled:
+        try:
+            if self.obstacle_prevent_enabled:
             # Get safe distance from the slider
-            self.obstacle_prevent_distance = self.obstacle_slider.get()
+             self.obstacle_prevent_distance = self.obstacle_slider.get()
 
             # Measure distances from sensors
             front_distance = measure_distance(FRONT_TRIG, FRONT_ECHO)
@@ -319,15 +320,17 @@ class DroneControlGUI:
             # Update obstacle status in the GUI
             self.status_labels["Obstacle Status:"].config(text=obstacle_status)
 
-        time.sleep(0.3)  # Wait half a second before the next check
-
+            time.sleep(0.3)  # Wait half a second before the next check
+        except Exception as e:
+            print(f"Error measuring distance: {e}")
+            break
 
     def show_message(self, title, message):
         messagebox.showinfo(title, message)
 
     def close(self):
         self.vehicle.close()
-        GPIO.cleanup()
+        # GPIO.cleanup()
         self.master.quit()
 
 # Main code execution
