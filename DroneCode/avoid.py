@@ -4,52 +4,96 @@ from tkinter import messagebox
 from dronekit import connect, VehicleMode
 import time
 import threading
-import RPi.GPIO as GPIO
+from gpiozero import DigitalOutputDevice, DigitalInputDevice
+# import RPi.GPIO as GPIO
 
 # Add argparse to parse command-line arguments for vehicle connection
 parser = argparse.ArgumentParser()
 parser.add_argument('--connect', default='127.0.0.1:14550', help='Connection string to the vehicle')
 args = parser.parse_args()
 
-# GPIO setup for HC-SR04 on multiple directions (front, back, left, right)
-FRONT_TRIG, FRONT_ECHO = 23, 24
-BACK_TRIG, BACK_ECHO = 25, 26
-LEFT_TRIG, LEFT_ECHO = 27, 28
-RIGHT_TRIG, RIGHT_ECHO = 29, 30
 
-GPIO.setmode(GPIO.BCM)
+
+
+# GPIO setup for HC-SR04 on multiple directions (front, back, left, right)
+FRONT_TRIG, FRONT_ECHO = 5, 24
+BACK_TRIG, BACK_ECHO = 5, 26
+LEFT_TRIG, LEFT_ECHO = 5, 28
+RIGHT_TRIG, RIGHT_ECHO = 5, 30
 
 # Setup for front sensor
-GPIO.setup(FRONT_TRIG, GPIO.OUT)
-GPIO.setup(FRONT_ECHO, GPIO.IN)
+front_trigger = DigitalOutputDevice(FRONT_TRIG)
+front_echo = DigitalInputDevice(FRONT_ECHO)
 
 # Setup for back sensor
-GPIO.setup(BACK_TRIG, GPIO.OUT)
-GPIO.setup(BACK_ECHO, GPIO.IN)
+back_trigger = DigitalOutputDevice(BACK_TRIG)
+back_echo = DigitalInputDevice(BACK_ECHO)
 
 # Setup for left sensor
-GPIO.setup(LEFT_TRIG, GPIO.OUT)
-GPIO.setup(LEFT_ECHO, GPIO.IN)
+left_trigger = DigitalOutputDevice(LEFT_TRIG)
+left_echo = DigitalInputDevice(LEFT_ECHO)
 
 # Setup for right sensor
-GPIO.setup(RIGHT_TRIG, GPIO.OUT)
-GPIO.setup(RIGHT_ECHO, GPIO.IN)
+right_trigger = DigitalOutputDevice(RIGHT_TRIG)
+right_echo = DigitalInputDevice(RIGHT_ECHO)
 
-# Function to measure distance using HC-SR04 sensor
-def measure_distance(trig, echo):
-    GPIO.output(trig, False)
+def measure_distance(trigger, echo):
+    trigger.off()
     time.sleep(0.2)
-    GPIO.output(trig, True)
+    trigger.on()
     time.sleep(0.00001)
-    GPIO.output(trig, False)
-    while GPIO.input(echo) == 0:
+    trigger.off()
+
+    pulse_start = time.time()
+    while not echo.is_active:
         pulse_start = time.time()
-    while GPIO.input(echo) == 1:
+
+    while echo.is_active:
         pulse_end = time.time()
+
     pulse_duration = pulse_end - pulse_start
     distance = pulse_duration * 17150
-    distance = round(distance, 2)
-    return distance
+    return round(distance, 2)
+
+# # GPIO setup for HC-SR04 on multiple directions (front, back, left, right)
+# FRONT_TRIG, FRONT_ECHO = 5, 24
+# BACK_TRIG, BACK_ECHO = 5, 26
+# LEFT_TRIG, LEFT_ECHO = 5, 28
+# RIGHT_TRIG, RIGHT_ECHO = 5, 30
+
+# GPIO.setmode(GPIO.BCM)
+
+# # Setup for front sensor
+# GPIO.setup(FRONT_TRIG, GPIO.OUT)
+# GPIO.setup(FRONT_ECHO, GPIO.IN)
+
+# # Setup for back sensor
+# GPIO.setup(BACK_TRIG, GPIO.OUT)
+# GPIO.setup(BACK_ECHO, GPIO.IN)
+
+# # Setup for left sensor
+# GPIO.setup(LEFT_TRIG, GPIO.OUT)
+# GPIO.setup(LEFT_ECHO, GPIO.IN)
+
+# # Setup for right sensor
+# GPIO.setup(RIGHT_TRIG, GPIO.OUT)
+# GPIO.setup(RIGHT_ECHO, GPIO.IN)
+
+# Function to measure distance using HC-SR04 sensor
+# def measure_distance(trig, echo):
+#     GPIO.output(trig, False)
+#     time.sleep(0.2)
+#     GPIO.output(trig, True)
+#     time.sleep(0.00001)
+#     GPIO.output(trig, False)
+#     while GPIO.input(echo) == 0:
+#         pulse_start = time.time()
+#     while GPIO.input(echo) == 1:
+#         pulse_end = time.time()
+#     pulse_duration = pulse_end - pulse_start
+#     distance = pulse_duration * 17150
+#     distance = round(distance, 2)
+#     return distance
 
 class DroneControlGUI:
     def __init__(self, master, connection_string):
@@ -275,7 +319,7 @@ class DroneControlGUI:
             # Update obstacle status in the GUI
             self.status_labels["Obstacle Status:"].config(text=obstacle_status)
 
-        time.sleep(0.5)  # Wait half a second before the next check
+        time.sleep(0.3)  # Wait half a second before the next check
 
 
     def show_message(self, title, message):
