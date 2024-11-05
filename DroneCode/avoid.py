@@ -16,10 +16,10 @@ args = parser.parse_args()
 
 
 # GPIO setup for HC-SR04 on multiple directions (front, back, left, right)
-FRONT_TRIG, FRONT_ECHO = 5, 24
-BACK_TRIG, BACK_ECHO = 6 , 26
-LEFT_TRIG, LEFT_ECHO = 19, 27
-RIGHT_TRIG, RIGHT_ECHO =23 , 22
+FRONT_TRIG, FRONT_ECHO = 17, 27
+LEFT_TRIG, LEFT_ECHO = 22 , 23
+RIGHT_TRIG, RIGHT_ECHO = 5 ,6
+BACK_TRIG, BACK_ECHO = 13 ,12
 
 # Setup for front sensor
 front_trigger = DigitalOutputDevice(FRONT_TRIG)
