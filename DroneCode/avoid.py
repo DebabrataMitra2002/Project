@@ -4,7 +4,7 @@ from tkinter import messagebox
 from dronekit import connect, VehicleMode
 import time
 import threading
-from gpiozero import DigitalOutputDevice, DigitalInputDevice
+from gpiozero import DistanceSensor
 # import RPi.GPIO as GPIO
 
 # Add argparse to parse command-line arguments for vehicle connection
@@ -22,38 +22,54 @@ RIGHT_TRIG, RIGHT_ECHO = 5, 6
 BACK_TRIG, BACK_ECHO = 19, 26
 
 # Setup for front sensor
-front_trigger = DigitalOutputDevice(FRONT_TRIG)
-front_echo = DigitalInputDevice(FRONT_ECHO)
+# front_trigger = DigitalOutputDevice(FRONT_TRIG)
+# front_echo = DigitalInputDevice(FRONT_ECHO)
 
-# Setup for back sensor
-back_trigger = DigitalOutputDevice(BACK_TRIG)
-back_echo = DigitalInputDevice(BACK_ECHO)
+# # Setup for back sensor
+# back_trigger = DigitalOutputDevice(BACK_TRIG)
+# back_echo = DigitalInputDevice(BACK_ECHO)
 
-# Setup for left sensor
-left_trigger = DigitalOutputDevice(LEFT_TRIG)
-left_echo = DigitalInputDevice(LEFT_ECHO)
+# # Setup for left sensor
+# left_trigger = DigitalOutputDevice(LEFT_TRIG)
+# left_echo = DigitalInputDevice(LEFT_ECHO)
 
-# Setup for right sensor
-right_trigger = DigitalOutputDevice(RIGHT_TRIG)
-right_echo = DigitalInputDevice(RIGHT_ECHO)
+# # Setup for right sensor
+# right_trigger = DigitalOutputDevice(RIGHT_TRIG)
+# right_echo = DigitalInputDevice(RIGHT_ECHO)
 
-def measure_distance(trigger, echo):
-    trigger.off()
-    time.sleep(0.2)
-    trigger.on()
-    time.sleep(0.00001)
-    trigger.off()
+# Initialize DistanceSensor objects for each sensor
+front_sensor = DistanceSensor(echo=FRONT_ECHO, trigger=FRONT_TRIG, max_distance=4)
+left_sensor = DistanceSensor(echo=LEFT_ECHO, trigger=LEFT_TRIG, max_distance=4)
+right_sensor = DistanceSensor(echo=RIGHT_ECHO, trigger=RIGHT_TRIG, max_distance=4)
+back_sensor = DistanceSensor(echo=BACK_ECHO, trigger=BACK_TRIG, max_distance=4)
 
-    pulse_start = time.time()
-    while not echo.is_active:
-        pulse_start = time.time()
+def measure_distance(sensor):
+    try:
+        return round(sensor.distance * 100, 2)  # Convert to centimeters
+    except Exception as e:
+        print(f"Error reading sensor: {e}")
+        return None
 
-    while echo.is_active:
-        pulse_end = time.time()
 
-    pulse_duration = pulse_end - pulse_start
-    distance = pulse_duration * 17150
-    return round(distance, 2)
+# def measure_distance(trigger, echo):
+#     trigger.off()
+#     time.sleep(0.2)
+#     trigger.on()
+#     time.sleep(0.00001)
+#     trigger.off()
+
+#     pulse_start = time.time()
+#     while not echo.is_active:
+#         pulse_start = time.time()
+
+#     while echo.is_active:
+#         pulse_end = time.time()
+
+#     pulse_duration = pulse_end - pulse_start
+#     distance = pulse_duration * 17150
+#     return round(distance, 2)
+ 
+
 
 class DroneControlGUI:
     # def __init__(self, master, connection_string):
@@ -389,10 +405,10 @@ class DroneControlGUI:
                     self.obstacle_prevent_distance = self.obstacle_slider.get()
 
                     # Measure distances from sensors
-                    front_distance = measure_distance(FRONT_TRIG, FRONT_ECHO)
-                    back_distance = measure_distance(BACK_TRIG, BACK_ECHO)
-                    left_distance = measure_distance(LEFT_TRIG, LEFT_ECHO)
-                    right_distance = measure_distance(RIGHT_TRIG, RIGHT_ECHO)
+                    front_distance = measure_distance(front_sensor)
+                    back_distance = measure_distance(back_sensor)
+                    left_distance = measure_distance(left_sensor)
+                    right_distance = measure_distance(right_sensor )
 
                     # Get the drone's current velocity
                     current_velocity = self.vehicle.velocity  # (vx, vy, vz) in m/s
@@ -454,7 +470,7 @@ class DroneControlGUI:
                     # Update the latest obstacle status
                     self.latest_obstacle_status = obstacle_status
 
-                time.sleep(0.3)  # Wait half a second before the next check
+                time.sleep(0.5)  # Wait half a second before the next check
             except Exception as e:
                 print(f"Error measuring distance: {e}")
                 break
