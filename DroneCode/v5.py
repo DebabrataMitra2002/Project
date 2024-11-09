@@ -142,6 +142,11 @@ def measure_distance(sensor):
         print(f"Error reading sensor: {e}")
         return 999  # Default value when error occurs
 
+def send_velocity(x,y,z,duration):
+    vehicle.velocity=(x,y,z)
+    time.sleep(duration)
+
+
 class DroneObstacleAvoidance:
 
     def __init__(self, connection_string):
@@ -178,34 +183,24 @@ class DroneObstacleAvoidance:
 
                 # Decision Logic for Obstacle Avoidance
                 if (obstacle_front and obstacle_back) or (obstacle_left and obstacle_right):
-                    self.vehicle.simple_goto(self.vehicle.location.global_frame.lat,
-                                             self.vehicle.location.global_frame.lon,
-                                             self.vehicle.location.global_frame.alt + 1)
+                    send_velocity(0,0,1,duration=2)
                     print("Obstacles in multiple directions - Increasing Height!")
                 else:
                     # Handle obstacles in individual directions
                     if obstacle_front and not (obstacle_back or obstacle_left or obstacle_right):
-                        self.vehicle.simple_goto(self.vehicle.location.global_frame.lat,
-                                                 self.vehicle.location.global_frame.lon - 1,
-                                                 self.vehicle.location.global_frame.alt)
+                        send_velocity(-1,0,0,duration=2)
                         print("Obstacle detected in Front - Moving Backward!")
 
                     elif obstacle_back and not (obstacle_front or obstacle_left or obstacle_right):
-                        self.vehicle.simple_goto(self.vehicle.location.global_frame.lat,
-                                                 self.vehicle.location.global_frame.lon + 1,
-                                                 self.vehicle.location.global_frame.alt)
+                        send_velocity(1,0,0,duration=2)
                         print("Obstacle detected in Back - Moving Forward!")
 
                     elif obstacle_left and not (obstacle_front or obstacle_back or obstacle_right):
-                        self.vehicle.simple_goto(self.vehicle.location.global_frame.lat + 1,
-                                                 self.vehicle.location.global_frame.lon,
-                                                 self.vehicle.location.global_frame.alt)
+                        send_velocity(0,1,0,duration=2)
                         print("Obstacle detected on Left - Moving Right!")
 
                     elif obstacle_right and not (obstacle_front or obstacle_back or obstacle_left):
-                        self.vehicle.simple_goto(self.vehicle.location.global_frame.lat - 1,
-                                                 self.vehicle.location.global_frame.lon,
-                                                 self.vehicle.location.global_frame.alt)
+                        send_velocity(0,-1,0,duration=2)
                         print("Obstacle detected on Right - Moving Left!")
 
                 time.sleep(0.5)  # Wait half a second before the next check
