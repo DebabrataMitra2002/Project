@@ -35,7 +35,7 @@ class DroneObstacleAvoidance:
         # Connect to the vehicle
         self.vehicle = connect(connection_string, baud=921600, wait_ready=True)
         self.obstacle_prevent_enabled = False
-        self.obstacle_prevent_distance = 2  # Default obstacle avoidance distance in meters
+        self.obstacle_prevent_distance = 200  # Default obstacle avoidance distance in cm
         self.latest_obstacle_status = "All Clear"  # Store the latest status
 
         # Start the obstacle avoidance system
@@ -52,7 +52,7 @@ class DroneObstacleAvoidance:
         try:
             if self.obstacle_prevent_enabled:
                 # Get safe distance from the slider (or use a fixed value here for simplicity)
-                self.obstacle_prevent_distance = 2  # Example: 2 meters
+                self.obstacle_prevent_distance = 200  # Example: 200 cm
 
                 # Measure distances from sensors
                 front_distance = measure_distance(front_sensor)
@@ -95,7 +95,7 @@ class DroneObstacleAvoidance:
                     if obstacle_front and not (obstacle_back or obstacle_left or obstacle_right):
                         if speed_magnitude > 2:
                             self.vehicle.simple_goto(self.vehicle.location.global_frame.lat,
-                                                     self.vehicle.location.global_frame.lon - 2,
+                                                     self.vehicle.location.global_frame.lon - 1.5,
                                                      self.vehicle.location.global_frame.alt)
                         else:
                             self.vehicle.simple_goto(self.vehicle.location.global_frame.lat,
@@ -106,7 +106,7 @@ class DroneObstacleAvoidance:
                     elif obstacle_back and not (obstacle_front or obstacle_left or obstacle_right):
                         if speed_magnitude > 2:
                             self.vehicle.simple_goto(self.vehicle.location.global_frame.lat,
-                                                     self.vehicle.location.global_frame.lon + 2,
+                                                     self.vehicle.location.global_frame.lon + 1.5,
                                                      self.vehicle.location.global_frame.alt)
                         else:
                             self.vehicle.simple_goto(self.vehicle.location.global_frame.lat,
@@ -116,7 +116,7 @@ class DroneObstacleAvoidance:
 
                     elif obstacle_left and not (obstacle_front or obstacle_back or obstacle_right):
                         if speed_magnitude > 2:
-                            self.vehicle.simple_goto(self.vehicle.location.global_frame.lat + 2,
+                            self.vehicle.simple_goto(self.vehicle.location.global_frame.lat + 1.5,
                                                      self.vehicle.location.global_frame.lon,
                                                      self.vehicle.location.global_frame.alt)
                         else:
@@ -127,7 +127,7 @@ class DroneObstacleAvoidance:
 
                     elif obstacle_right and not (obstacle_front or obstacle_back or obstacle_left):
                         if speed_magnitude > 2:
-                            self.vehicle.simple_goto(self.vehicle.location.global_frame.lat - 2,
+                            self.vehicle.simple_goto(self.vehicle.location.global_frame.lat - 1.5,
                                                      self.vehicle.location.global_frame.lon,
                                                      self.vehicle.location.global_frame.alt)
                         else:
