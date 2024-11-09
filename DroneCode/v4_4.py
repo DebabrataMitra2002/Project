@@ -36,7 +36,7 @@ class DroneObstacleAvoidance:
         self.vehicle = connect(connection_string, baud=921600, wait_ready=True)
         self.obstacle_prevent_enabled = False
         self.obstacle_prevent_distance = 200  # Default obstacle avoidance distance in cm
-        self.latest_obstacle_status = "All Clear"  # Store the latest status
+        # self.latest_obstacle_status = "All Clear"  # Store the latest status
 
         # Start the obstacle avoidance system
         self.obstacle_thread = threading.Thread(target=self.obstacle_avoidance_system)
@@ -61,10 +61,10 @@ class DroneObstacleAvoidance:
                 right_distance = measure_distance(right_sensor)
 
                 # Print the sensor distance data
-                print(f"Front Distance: {front_distance} cm")
-                print(f"Back Distance: {back_distance} cm")
-                print(f"Left Distance: {left_distance} cm")
-                print(f"Right Distance: {right_distance} cm")
+                # print(f"Front Distance: {front_distance} cm")
+                # print(f"Back Distance: {back_distance} cm")
+                # print(f"Left Distance: {left_distance} cm")
+                # print(f"Right Distance: {right_distance} cm")
 
                 # Get the drone's current velocity
                 current_velocity = self.vehicle.velocity  # (vx, vy, vz) in m/s
@@ -77,7 +77,7 @@ class DroneObstacleAvoidance:
                 obstacle_right = right_distance < self.obstacle_prevent_distance
 
                 # Decision Logic for Obstacle Avoidance
-                obstacle_status = "All Clear"
+                # obstacle_status = "All Clear"
 
                 # Increase height if obstacles are detected in multiple directions
                 if (obstacle_front and obstacle_back) or (obstacle_left and obstacle_right) or \
@@ -89,7 +89,7 @@ class DroneObstacleAvoidance:
                     self.vehicle.simple_goto(self.vehicle.location.global_frame.lat,
                                              self.vehicle.location.global_frame.lon,
                                              self.vehicle.location.global_frame.alt + 1)
-                    obstacle_status = "Obstacles in multiple directions - Increasing Height!"
+                    print("Obstacles in multiple directions - Increasing Height!")
                 else:
                     # Move backward or sideways depending on obstacle position
                     if obstacle_front and not (obstacle_back or obstacle_left or obstacle_right):
@@ -101,7 +101,7 @@ class DroneObstacleAvoidance:
                             self.vehicle.simple_goto(self.vehicle.location.global_frame.lat,
                                                      self.vehicle.location.global_frame.lon - 1,
                                                      self.vehicle.location.global_frame.alt)
-                        obstacle_status = "Obstacle detected in Front - Moving Backward!"
+                        print("Obstacle detected in Front - Moving Backward!")
 
                     elif obstacle_back and not (obstacle_front or obstacle_left or obstacle_right):
                         if speed_magnitude > 2:
@@ -112,7 +112,7 @@ class DroneObstacleAvoidance:
                             self.vehicle.simple_goto(self.vehicle.location.global_frame.lat,
                                                      self.vehicle.location.global_frame.lon + 1,
                                                      self.vehicle.location.global_frame.alt)
-                        obstacle_status = "Obstacle detected in Back - Moving Forward!"
+                        print("Obstacle detected in Back - Moving Forward!") 
 
                     elif obstacle_left and not (obstacle_front or obstacle_back or obstacle_right):
                         if speed_magnitude > 2:
@@ -123,8 +123,8 @@ class DroneObstacleAvoidance:
                             self.vehicle.simple_goto(self.vehicle.location.global_frame.lat + 1,
                                                      self.vehicle.location.global_frame.lon,
                                                      self.vehicle.location.global_frame.alt)
-                        obstacle_status = "Obstacle detected on Left - Moving Right!"
-
+                        print("Obstacle detected on Left - Moving Right!") 
+ 
                     elif obstacle_right and not (obstacle_front or obstacle_back or obstacle_left):
                         if speed_magnitude > 2:
                             self.vehicle.simple_goto(self.vehicle.location.global_frame.lat - 1.5,
@@ -134,7 +134,7 @@ class DroneObstacleAvoidance:
                             self.vehicle.simple_goto(self.vehicle.location.global_frame.lat - 1,
                                                      self.vehicle.location.global_frame.lon,
                                                      self.vehicle.location.global_frame.alt)
-                        obstacle_status = "Obstacle detected on Right - Moving Left!"
+                        print("Obstacle detected on Right - Moving Left!")
 
                 # If velocity is too low, stop and maintain safe distance
                 # if speed_magnitude < 2:
@@ -142,8 +142,8 @@ class DroneObstacleAvoidance:
                 #  obstacle_status += " | Low speed - Maintaining Safe Distance"
 
                 # Update the latest obstacle status
-                self.latest_obstacle_status = obstacle_status
-                print(f"Obstacle Status: {self.latest_obstacle_status}")
+                # self.latest_obstacle_status = obstacle_status
+                # print(f"Obstacle Status: {self.latest_obstacle_status}")
 
             time.sleep(0.5)  # Wait half a second before the next check
         except Exception as e:
@@ -160,7 +160,7 @@ if __name__ == '__main__':
     try:
         while True:
             # Example of enabling and disabling obstacle avoidance mode
-            user_input = input("Enter 'enable' to activate obstacle avoidance, 'disable' to deactivate: ").strip().lower()
+            user_input = input("Enter 'e' to activate obstacle avoidance, 'd' to deactivate: ").strip().lower()
             if user_input == 'enable':
                 drone_control.toggle_avoidance_mode()
             elif user_input == 'disable':
