@@ -12,30 +12,11 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--connect', default='127.0.0.1:14550', help='Connection string to the vehicle')
 args = parser.parse_args()
 
-
-
-
 # GPIO setup for HC-SR04 on multiple directions (front, back, left, right)
 FRONT_TRIG, FRONT_ECHO = 17, 27
 LEFT_TRIG, LEFT_ECHO = 22, 23
 RIGHT_TRIG, RIGHT_ECHO = 5, 6
 BACK_TRIG, BACK_ECHO = 19, 26
-
-# Setup for front sensor
-# front_trigger = DigitalOutputDevice(FRONT_TRIG)
-# front_echo = DigitalInputDevice(FRONT_ECHO)
-
-# # Setup for back sensor
-# back_trigger = DigitalOutputDevice(BACK_TRIG)
-# back_echo = DigitalInputDevice(BACK_ECHO)
-
-# # Setup for left sensor
-# left_trigger = DigitalOutputDevice(LEFT_TRIG)
-# left_echo = DigitalInputDevice(LEFT_ECHO)
-
-# # Setup for right sensor
-# right_trigger = DigitalOutputDevice(RIGHT_TRIG)
-# right_echo = DigitalInputDevice(RIGHT_ECHO)
 
 # Initialize DistanceSensor objects for each sensor
 front_sensor = DistanceSensor(echo=FRONT_ECHO, trigger=FRONT_TRIG, max_distance=4)
@@ -51,52 +32,9 @@ def measure_distance(sensor):
         return None
 
 
-# def measure_distance(trigger, echo):
-#     trigger.off()
-#     time.sleep(0.2)
-#     trigger.on()
-#     time.sleep(0.00001)
-#     trigger.off()
-
-#     pulse_start = time.time()
-#     while not echo.is_active:
-#         pulse_start = time.time()
-
-#     while echo.is_active:
-#         pulse_end = time.time()
-
-#     pulse_duration = pulse_end - pulse_start
-#     distance = pulse_duration * 17150
-#     return round(distance, 2)
- 
-
 
 class DroneControlGUI:
-    # def __init__(self, master, connection_string):
-    #     self.master = master
-    #     self.vehicle = connect(connection_string, baud=921600, wait_ready=True)
-    #     self.obstacle_prevent_enabled = False
-    #     self.obstacle_prevent_distance = 2  # Default obstacle avoidance distance in meters
-
-    #     master.title("SAFE FLY")
-    #     master.geometry("800x600")
-
-    #     # Status Bar
-    #     self.status_bar = tk.Label(master, text="Status: Ready", bd=1, relief=tk.SUNKEN, anchor=tk.W)
-    #     self.status_bar.pack(side=tk.TOP, fill=tk.X)
-
-    #     # Create the UI layout
-    #     self.create_widgets()
-
-    #     # Start tracking the drone status
-    #     self.update_status()
-
-    #     # Thread for tracking the drone's position and obstacle detection
-    #     self.obstacle_thread = threading.Thread(target=self.obstacle_avoidance_system)
-    #     self.obstacle_thread.daemon = True
-    #     self.obstacle_thread.start()
-
-    # ++++
+   
     def __init__(self, master, connection_string):
         self.master = master
         self.vehicle = connect(connection_string, baud=921600, wait_ready=True)
@@ -279,20 +217,6 @@ class DroneControlGUI:
       self.status_bar.config(text="Status: BRAKE Mode")
 
 
-
-    # def update_status(self):
-    #     # Update GUI with drone status information
-    #     self.status_labels["Connection Status:"].config(text="Connected" if self.vehicle.is_armable else "Disconnected")
-    #     self.status_labels["Current Mode:"].config(text=self.vehicle.mode.name)
-    #     self.status_labels["Drone Location:"].config(text=f"Lat: {self.vehicle.location.global_frame.lat}, Lon: {self.vehicle.location.global_frame.lon}")
-    #     self.status_labels["Altitude (m):"].config(text=self.vehicle.location.global_frame.alt)
-    #     self.status_labels["Battery Level:"].config(text=f"{self.vehicle.battery.level}%")
-    #     self.status_labels["Pitch:"].config(text=f"{self.vehicle.attitude.pitch:.2f}")
-    #     self.status_labels["Roll:"].config(text=f"{self.vehicle.attitude.roll:.2f}")
-    #     self.status_labels["Yaw:"].config(text=f"{self.vehicle.attitude.yaw:.2f}")
-    #     self.master.after(1000, self.update_status)  # Update every second
-
-
     def update_status(self):
         # Update GUI with drone status information
         self.status_labels["Connection Status:"].config(text="Connected" if self.vehicle.is_armable else "Disconnected")
@@ -316,87 +240,7 @@ class DroneControlGUI:
         self.avoidance_mode_button.config(text="Disable Avoidance" if self.obstacle_prevent_enabled else "Enable Avoidance")
         self.show_message("Info", "Obstacle avoidance " + ("enabled." if self.obstacle_prevent_enabled else "disabled."))
 
-    
-    # def obstacle_avoidance_system(self):
-    #  while True:
-    #     try:
-    #         if self.obstacle_prevent_enabled:
-    #         # Get safe distance from the slider
-    #          self.obstacle_prevent_distance = self.obstacle_slider.get()
-
-    #         # Measure distances from sensors
-    #         front_distance = measure_distance(FRONT_TRIG, FRONT_ECHO)
-    #         back_distance = measure_distance(BACK_TRIG, BACK_ECHO)
-    #         left_distance = measure_distance(LEFT_TRIG, LEFT_ECHO)
-    #         right_distance = measure_distance(RIGHT_TRIG, RIGHT_ECHO)
-
-    #         # Get the drone's current velocity
-    #         current_velocity = self.vehicle.velocity  # (vx, vy, vz) in m/s
-    #         speed_magnitude = (current_velocity[0] ** 2 + current_velocity[1] ** 2 + current_velocity[2] ** 2) ** 0.5
-
-    #         # Obstacle detection flags
-    #         obstacle_front = front_distance < self.obstacle_prevent_distance
-    #         obstacle_back = back_distance < self.obstacle_prevent_distance
-    #         obstacle_left = left_distance < self.obstacle_prevent_distance
-    #         obstacle_right = right_distance < self.obstacle_prevent_distance
-
-    #         # Decision Logic for Obstacle Avoidance
-    #         obstacle_status = "All Clear"
-
-    #         # Increase height if obstacles are detected in front & back, left & right, or all four or three directions
-    #         if (obstacle_front and obstacle_back) or (obstacle_left and obstacle_right) or \
-    #            (obstacle_front and obstacle_back and obstacle_left) or \
-    #            (obstacle_front and obstacle_back and obstacle_right) or \
-    #            (obstacle_left and obstacle_right and obstacle_back) or \
-    #            (obstacle_left and obstacle_right and obstacle_front) or \
-    #            (obstacle_front and obstacle_back and obstacle_left and obstacle_right):
-    #             self.vehicle.simple_goto(self.vehicle.location.global_frame.lat, self.vehicle.location.global_frame.lon, self.vehicle.location.global_frame.alt + 1)
-    #             obstacle_status = "Obstacles in multiple directions - Increasing Height!"
-    #         else:
-    #             # Move backward or sideways depending on obstacle position
-    #             if obstacle_front and not (obstacle_back or obstacle_left or obstacle_right):
-    #                 if speed_magnitude > 2:
-    #                     self.vehicle.simple_goto(self.vehicle.location.global_frame.lat, self.vehicle.location.global_frame.lon - 2, self.vehicle.location.global_frame.alt)
-    #                 else:
-    #                     self.vehicle.simple_goto(self.vehicle.location.global_frame.lat, self.vehicle.location.global_frame.lon - 1, self.vehicle.location.global_frame.alt)
-    #                 obstacle_status = "Obstacle detected in Front - Moving Backward!"
-                
-    #             elif obstacle_back and not (obstacle_front or obstacle_left or obstacle_right):
-    #                 if speed_magnitude > 2:
-    #                     self.vehicle.simple_goto(self.vehicle.location.global_frame.lat, self.vehicle.location.global_frame.lon + 2, self.vehicle.location.global_frame.alt)
-    #                 else:
-    #                     self.vehicle.simple_goto(self.vehicle.location.global_frame.lat, self.vehicle.location.global_frame.lon + 1, self.vehicle.location.global_frame.alt)
-    #                 obstacle_status = "Obstacle detected in Back - Moving Forward!"
-                
-    #             elif obstacle_left and not (obstacle_front or obstacle_back or obstacle_right):
-    #                 if speed_magnitude > 2:
-    #                     self.vehicle.simple_goto(self.vehicle.location.global_frame.lat + 2, self.vehicle.location.global_frame.lon, self.vehicle.location.global_frame.alt)
-    #                 else:
-    #                     self.vehicle.simple_goto(self.vehicle.location.global_frame.lat + 1, self.vehicle.location.global_frame.lon, self.vehicle.location.global_frame.alt)
-    #                 obstacle_status = "Obstacle detected on Left - Moving Right!"
-                
-    #             elif obstacle_right and not (obstacle_front or obstacle_back or obstacle_left):
-    #                 if speed_magnitude > 2:
-    #                     self.vehicle.simple_goto(self.vehicle.location.global_frame.lat - 2, self.vehicle.location.global_frame.lon, self.vehicle.location.global_frame.alt)
-    #                 else:
-    #                     self.vehicle.simple_goto(self.vehicle.location.global_frame.lat - 1, self.vehicle.location.global_frame.lon, self.vehicle.location.global_frame.alt)
-    #                 obstacle_status = "Obstacle detected on Right - Moving Left!"
-
-    #         # If velocity is too low, stop and maintain safe distance
-    #         if speed_magnitude < 2:
-    #             self.vehicle.velocity = (0, 0, 0)
-    #             obstacle_status += " | Low speed - Maintaining Safe Distance"
-
-    #         # Update obstacle status in the GUI
-    #         self.status_labels["Obstacle Status:"].config(text=obstacle_status)
-
-    #         time.sleep(0.3)  # Wait half a second before the next check
-    #     except Exception as e:
-    #         print(f"Error measuring distance: {e}")
-    #         break
-
-
-    #-----
+   
     def obstacle_avoidance_system(self):
         while True:
             try:
