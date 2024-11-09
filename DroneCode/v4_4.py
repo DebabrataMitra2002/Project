@@ -48,83 +48,107 @@ class DroneObstacleAvoidance:
         print(f"Obstacle avoidance {'enabled' if self.obstacle_prevent_enabled else 'disabled'}.")
 
     def obstacle_avoidance_system(self):
-        while True:
-            try:
-                if self.obstacle_prevent_enabled:
-                    # Get safe distance from the slider (or use a fixed value here for simplicity)
-                    self.obstacle_prevent_distance = 2  # Example: 2 meters
+     while True:
+        try:
+            if self.obstacle_prevent_enabled:
+                # Get safe distance from the slider (or use a fixed value here for simplicity)
+                self.obstacle_prevent_distance = 2  # Example: 2 meters
 
-                    # Measure distances from sensors
-                    front_distance = measure_distance(front_sensor)
-                    back_distance = measure_distance(back_sensor)
-                    left_distance = measure_distance(left_sensor)
-                    right_distance = measure_distance(right_sensor)
+                # Measure distances from sensors
+                front_distance = measure_distance(front_sensor)
+                back_distance = measure_distance(back_sensor)
+                left_distance = measure_distance(left_sensor)
+                right_distance = measure_distance(right_sensor)
 
-                    # Get the drone's current velocity
-                    current_velocity = self.vehicle.velocity  # (vx, vy, vz) in m/s
-                    speed_magnitude = (current_velocity[0] ** 2 + current_velocity[1] ** 2 + current_velocity[2] ** 2) ** 0.5
+                # Print the sensor distance data
+                print(f"Front Distance: {front_distance} cm")
+                print(f"Back Distance: {back_distance} cm")
+                print(f"Left Distance: {left_distance} cm")
+                print(f"Right Distance: {right_distance} cm")
 
-                    # Obstacle detection flags
-                    obstacle_front = front_distance < self.obstacle_prevent_distance
-                    obstacle_back = back_distance < self.obstacle_prevent_distance
-                    obstacle_left = left_distance < self.obstacle_prevent_distance
-                    obstacle_right = right_distance < self.obstacle_prevent_distance
+                # Get the drone's current velocity
+                current_velocity = self.vehicle.velocity  # (vx, vy, vz) in m/s
+                speed_magnitude = (current_velocity[0] ** 2 + current_velocity[1] ** 2 + current_velocity[2] ** 2) ** 0.5
 
-                    # Decision Logic for Obstacle Avoidance
-                    obstacle_status = "All Clear"
+                # Obstacle detection flags
+                obstacle_front = front_distance < self.obstacle_prevent_distance
+                obstacle_back = back_distance < self.obstacle_prevent_distance
+                obstacle_left = left_distance < self.obstacle_prevent_distance
+                obstacle_right = right_distance < self.obstacle_prevent_distance
 
-                    # Increase height if obstacles are detected in multiple directions
-                    if (obstacle_front and obstacle_back) or (obstacle_left and obstacle_right) or \
-                       (obstacle_front and obstacle_back and obstacle_left) or \
-                       (obstacle_front and obstacle_back and obstacle_right) or \
-                       (obstacle_left and obstacle_right and obstacle_back) or \
-                       (obstacle_left and obstacle_right and obstacle_front) or \
-                       (obstacle_front and obstacle_back and obstacle_left and obstacle_right):
-                        self.vehicle.simple_goto(self.vehicle.location.global_frame.lat, self.vehicle.location.global_frame.lon, self.vehicle.location.global_frame.alt + 1)
-                        obstacle_status = "Obstacles in multiple directions - Increasing Height!"
-                    else:
-                        # Move backward or sideways depending on obstacle position
-                        if obstacle_front and not (obstacle_back or obstacle_left or obstacle_right):
-                            if speed_magnitude > 2:
-                                self.vehicle.simple_goto(self.vehicle.location.global_frame.lat, self.vehicle.location.global_frame.lon - 2, self.vehicle.location.global_frame.alt)
-                            else:
-                                self.vehicle.simple_goto(self.vehicle.location.global_frame.lat, self.vehicle.location.global_frame.lon - 1, self.vehicle.location.global_frame.alt)
-                            obstacle_status = "Obstacle detected in Front - Moving Backward!"
-                        
-                        elif obstacle_back and not (obstacle_front or obstacle_left or obstacle_right):
-                            if speed_magnitude > 2:
-                                self.vehicle.simple_goto(self.vehicle.location.global_frame.lat, self.vehicle.location.global_frame.lon + 2, self.vehicle.location.global_frame.alt)
-                            else:
-                                self.vehicle.simple_goto(self.vehicle.location.global_frame.lat, self.vehicle.location.global_frame.lon + 1, self.vehicle.location.global_frame.alt)
-                            obstacle_status = "Obstacle detected in Back - Moving Forward!"
-                        
-                        elif obstacle_left and not (obstacle_front or obstacle_back or obstacle_right):
-                            if speed_magnitude > 2:
-                                self.vehicle.simple_goto(self.vehicle.location.global_frame.lat + 2, self.vehicle.location.global_frame.lon, self.vehicle.location.global_frame.alt)
-                            else:
-                                self.vehicle.simple_goto(self.vehicle.location.global_frame.lat + 1, self.vehicle.location.global_frame.lon, self.vehicle.location.global_frame.alt)
-                            obstacle_status = "Obstacle detected on Left - Moving Right!"
-                        
-                        elif obstacle_right and not (obstacle_front or obstacle_back or obstacle_left):
-                            if speed_magnitude > 2:
-                                self.vehicle.simple_goto(self.vehicle.location.global_frame.lat - 2, self.vehicle.location.global_frame.lon, self.vehicle.location.global_frame.alt)
-                            else:
-                                self.vehicle.simple_goto(self.vehicle.location.global_frame.lat - 1, self.vehicle.location.global_frame.lon, self.vehicle.location.global_frame.alt)
-                            obstacle_status = "Obstacle detected on Right - Moving Left!"
+                # Decision Logic for Obstacle Avoidance
+                obstacle_status = "All Clear"
 
-                    # If velocity is too low, stop and maintain safe distance
-                    if speed_magnitude < 2:
-                        self.vehicle.velocity = (0, 0, 0)
-                        obstacle_status += " | Low speed - Maintaining Safe Distance"
+                # Increase height if obstacles are detected in multiple directions
+                if (obstacle_front and obstacle_back) or (obstacle_left and obstacle_right) or \
+                        (obstacle_front and obstacle_back and obstacle_left) or \
+                        (obstacle_front and obstacle_back and obstacle_right) or \
+                        (obstacle_left and obstacle_right and obstacle_back) or \
+                        (obstacle_left and obstacle_right and obstacle_front) or \
+                        (obstacle_front and obstacle_back and obstacle_left and obstacle_right):
+                    self.vehicle.simple_goto(self.vehicle.location.global_frame.lat,
+                                             self.vehicle.location.global_frame.lon,
+                                             self.vehicle.location.global_frame.alt + 1)
+                    obstacle_status = "Obstacles in multiple directions - Increasing Height!"
+                else:
+                    # Move backward or sideways depending on obstacle position
+                    if obstacle_front and not (obstacle_back or obstacle_left or obstacle_right):
+                        if speed_magnitude > 2:
+                            self.vehicle.simple_goto(self.vehicle.location.global_frame.lat,
+                                                     self.vehicle.location.global_frame.lon - 2,
+                                                     self.vehicle.location.global_frame.alt)
+                        else:
+                            self.vehicle.simple_goto(self.vehicle.location.global_frame.lat,
+                                                     self.vehicle.location.global_frame.lon - 1,
+                                                     self.vehicle.location.global_frame.alt)
+                        obstacle_status = "Obstacle detected in Front - Moving Backward!"
 
-                    # Update the latest obstacle status
-                    self.latest_obstacle_status = obstacle_status
-                    print(f"Obstacle Status: {self.latest_obstacle_status}")
+                    elif obstacle_back and not (obstacle_front or obstacle_left or obstacle_right):
+                        if speed_magnitude > 2:
+                            self.vehicle.simple_goto(self.vehicle.location.global_frame.lat,
+                                                     self.vehicle.location.global_frame.lon + 2,
+                                                     self.vehicle.location.global_frame.alt)
+                        else:
+                            self.vehicle.simple_goto(self.vehicle.location.global_frame.lat,
+                                                     self.vehicle.location.global_frame.lon + 1,
+                                                     self.vehicle.location.global_frame.alt)
+                        obstacle_status = "Obstacle detected in Back - Moving Forward!"
 
-                time.sleep(0.5)  # Wait half a second before the next check
-            except Exception as e:
-                print(f"Error measuring distance: {e}")
-                break
+                    elif obstacle_left and not (obstacle_front or obstacle_back or obstacle_right):
+                        if speed_magnitude > 2:
+                            self.vehicle.simple_goto(self.vehicle.location.global_frame.lat + 2,
+                                                     self.vehicle.location.global_frame.lon,
+                                                     self.vehicle.location.global_frame.alt)
+                        else:
+                            self.vehicle.simple_goto(self.vehicle.location.global_frame.lat + 1,
+                                                     self.vehicle.location.global_frame.lon,
+                                                     self.vehicle.location.global_frame.alt)
+                        obstacle_status = "Obstacle detected on Left - Moving Right!"
+
+                    elif obstacle_right and not (obstacle_front or obstacle_back or obstacle_left):
+                        if speed_magnitude > 2:
+                            self.vehicle.simple_goto(self.vehicle.location.global_frame.lat - 2,
+                                                     self.vehicle.location.global_frame.lon,
+                                                     self.vehicle.location.global_frame.alt)
+                        else:
+                            self.vehicle.simple_goto(self.vehicle.location.global_frame.lat - 1,
+                                                     self.vehicle.location.global_frame.lon,
+                                                     self.vehicle.location.global_frame.alt)
+                        obstacle_status = "Obstacle detected on Right - Moving Left!"
+
+                # If velocity is too low, stop and maintain safe distance
+                # if speed_magnitude < 2:
+                #  self.vehicle.velocity = (0, 0, 0)
+                #  obstacle_status += " | Low speed - Maintaining Safe Distance"
+
+                # Update the latest obstacle status
+                self.latest_obstacle_status = obstacle_status
+                print(f"Obstacle Status: {self.latest_obstacle_status}")
+
+            time.sleep(0.5)  # Wait half a second before the next check
+        except Exception as e:
+            print(f"Error measuring distance: {e}")
+            break
 
     def close(self):
         self.vehicle.close()
