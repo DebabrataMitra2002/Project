@@ -108,11 +108,10 @@
 #         print("Exiting...")
 #         drone_control.close()
 
-
 import argparse
 import time
 import threading
-from dronekit import connect, VehicleMode
+from dronekit import connect, VehicleMode, LocationGlobalRelative
 from gpiozero import DistanceSensor
 
 # Add argparse to parse command-line arguments for vehicle connection
@@ -135,17 +134,33 @@ back_sensor = DistanceSensor(echo=BACK_ECHO, trigger=BACK_TRIG, max_distance=4)
 def measure_distance(sensor):
     try:
         distance = round(sensor.distance * 100, 2)  # Convert to centimeters
-        if distance is None or distance > 400:  # No object detected or sensor out of range
+        if distance > 400:  # No object detected or sensor out of range
             return 999  # Default large value indicating no obstacle
         return distance
     except Exception as e:
         print(f"Error reading sensor: {e}")
         return 999  # Default value when error occurs
 
-def send_velocity(x,y,z,duration):
-    vehicle.velocity=(x,y,z)
-    time.sleep(duration)
-
+def send_velocity(vehicle, velocity_x, velocity_y, velocity_z, duration):
+    """
+    Function to send velocity commands to the drone.
+    Arguments:
+    vehicle: The connected dronekit vehicle instance.
+    velocity_x, velocity_y, velocity_z: Velocity components in the x, y, and z directions.
+    duration: Time duration for which the velocity is applied.
+    """
+    msg = vehicle.message_factory.set_position_target_local_ned_encode(
+        0, 0, 0,  # Timestamp and target IDs
+        mavutil.mavlink.MAV_FRAME_BODY_NED,  # Use body NED frame
+        0b0000111111000111,  # Mask to enable only velocity
+        0, 0, 0,  # x, y, z positions (not used)
+        velocity_x, velocity_y, velocity_z,  # Velocity components
+        0, 0, 0,  # Acceleration (not used)
+        0, 0)  # Yaw (not used)
+    
+    for _ in range(duration * 10):  # Send the command multiple times for duration seconds
+        vehicle.send_mavlink(msg)
+        time.sleep(0.1)  # Sleep for 0.1 seconds
 
 class DroneObstacleAvoidance:
 
@@ -174,6 +189,8 @@ class DroneObstacleAvoidance:
                 if self.vehicle.mode != VehicleMode("GUIDED"):
                     print("Switching to GUIDED mode")
                     self.vehicle.mode = VehicleMode("GUIDED")
+                    while self.vehicle.mode != VehicleMode("GUIDED"):
+                        time.sleep(1)  # Wait until the mode change is complete
 
                 # Obstacle detection flags
                 obstacle_front = front_distance < self.obstacle_prevent_distance
@@ -183,24 +200,24 @@ class DroneObstacleAvoidance:
 
                 # Decision Logic for Obstacle Avoidance
                 if (obstacle_front and obstacle_back) or (obstacle_left and obstacle_right):
-                    send_velocity(0,0,1,duration=2)
+                    send_velocity(self.vehicle, 0, 0, 1, duration=2)
                     print("Obstacles in multiple directions - Increasing Height!")
                 else:
                     # Handle obstacles in individual directions
                     if obstacle_front and not (obstacle_back or obstacle_left or obstacle_right):
-                        send_velocity(-1,0,0,duration=2)
+                        send_velocity(self.vehicle, -1, 0, 0, duration=2)
                         print("Obstacle detected in Front - Moving Backward!")
 
                     elif obstacle_back and not (obstacle_front or obstacle_left or obstacle_right):
-                        send_velocity(1,0,0,duration=2)
+                        send_velocity(self.vehicle, 1, 0, 0, duration=2)
                         print("Obstacle detected in Back - Moving Forward!")
 
                     elif obstacle_left and not (obstacle_front or obstacle_back or obstacle_right):
-                        send_velocity(0,1,0,duration=2)
+                        send_velocity(self.vehicle, 0, 1, 0, duration=2)
                         print("Obstacle detected on Left - Moving Right!")
 
                     elif obstacle_right and not (obstacle_front or obstacle_back or obstacle_left):
-                        send_velocity(0,-1,0,duration=2)
+                        send_velocity(self.vehicle, 0, -1, 0, duration=2)
                         print("Obstacle detected on Right - Moving Left!")
 
                 time.sleep(0.5)  # Wait half a second before the next check
@@ -216,7 +233,6 @@ if __name__ == '__main__':
     drone_control = DroneObstacleAvoidance(args.connect)
     try:
         while True:
-            # You no longer need to toggle, so this part is removed.
             time.sleep(1)
 
     except KeyboardInterrupt:
