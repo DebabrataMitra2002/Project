@@ -201,24 +201,24 @@ class DroneObstacleAvoidance:
 
                 # Decision Logic for Obstacle Avoidance
                 if (obstacle_front and obstacle_back) or (obstacle_left and obstacle_right):
-                    send_velocity(self.vehicle, 0, 0, 1, duration=2)
+                    send_velocity(self.vehicle, 0, 0, 1, duration=1)
                     print("Obstacles in multiple directions - Increasing Height!")
                 else:
                     # Handle obstacles in individual directions
                     if obstacle_front and not (obstacle_back or obstacle_left or obstacle_right):
-                        send_velocity(self.vehicle, -1, 0, 0, duration=2)
+                        send_velocity(self.vehicle, -1, 0, 0, duration=1)
                         print("Obstacle detected in Front - Moving Backward!")
 
                     elif obstacle_back and not (obstacle_front or obstacle_left or obstacle_right):
-                        send_velocity(self.vehicle, 1, 0, 0, duration=2)
+                        send_velocity(self.vehicle, 1, 0, 0, duration=1)
                         print("Obstacle detected in Back - Moving Forward!")
 
                     elif obstacle_left and not (obstacle_front or obstacle_back or obstacle_right):
-                        send_velocity(self.vehicle, 0, 1, 0, duration=2)
+                        send_velocity(self.vehicle, 0, 1, 0, duration=1)
                         print("Obstacle detected on Left - Moving Right!")
 
                     elif obstacle_right and not (obstacle_front or obstacle_back or obstacle_left):
-                        send_velocity(self.vehicle, 0, -1, 0, duration=2)
+                        send_velocity(self.vehicle, 0, -1, 0, duration=1)
                         print("Obstacle detected on Right - Moving Left!")
 
                 time.sleep(0.5)  # Wait half a second before the next check
