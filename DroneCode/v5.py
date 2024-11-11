@@ -111,7 +111,7 @@
 import argparse
 import time
 import threading
-from dronekit import connect, VehicleMode, LocationGlobalRelative
+from dronekit import connect, VehicleMode, LocationGlobalRelative,mavutil
 from gpiozero import DistanceSensor
 
 # Add argparse to parse command-line arguments for vehicle connection
@@ -167,7 +167,7 @@ class DroneObstacleAvoidance:
     def __init__(self, connection_string):
         # Connect to the vehicle
         self.vehicle = connect(connection_string, baud=921600, wait_ready=True)
-        self.obstacle_prevent_distance = 200  # Default obstacle avoidance distance in cm
+        self.obstacle_prevent_distance = 150  # Default obstacle avoidance distance in cm
 
         # Start the obstacle avoidance system
         self.obstacle_thread = threading.Thread(target=self.obstacle_avoidance_system)
@@ -186,11 +186,12 @@ class DroneObstacleAvoidance:
                 print(f"Front: {front_distance} cm, Back: {back_distance} cm, Left: {left_distance} cm, Right: {right_distance} cm")
 
                 # Ensure the drone is in GUIDED mode
-                if self.vehicle.mode != VehicleMode("GUIDED"):
+                if front_distance<150 and back_distance<150 and left_distance<150 and right_distance<150:
+                  if self.vehicle.mode != VehicleMode("GUIDED"):
                     print("Switching to GUIDED mode")
                     self.vehicle.mode = VehicleMode("GUIDED")
                     while self.vehicle.mode != VehicleMode("GUIDED"):
-                        time.sleep(1)  # Wait until the mode change is complete
+                        time.sleep(0.5)  # Wait until the mode change is complete
 
                 # Obstacle detection flags
                 obstacle_front = front_distance < self.obstacle_prevent_distance
@@ -233,7 +234,7 @@ if __name__ == '__main__':
     drone_control = DroneObstacleAvoidance(args.connect)
     try:
         while True:
-            time.sleep(1)
+            time.sleep(0.5)
 
     except KeyboardInterrupt:
         print("Exiting...")
