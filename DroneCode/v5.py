@@ -167,7 +167,12 @@ class DroneObstacleAvoidance:
     def __init__(self, connection_string):
         # Connect to the vehicle
         self.vehicle = connect(connection_string, baud=921600, wait_ready=True)
-        self.obstacle_prevent_distance = 130  # Default obstacle avoidance distance in cm
+        
+        # Set obstacle avoidance distance to 3 meters (300 cm)
+        self.obstacle_prevent_distance = 130  # Adjust distance threshold here
+
+        # Altitude threshold for enabling the obstacle avoidance system
+        self.target_altitude = 3.0  # Altitude in meters
 
         # Start the obstacle avoidance system
         self.obstacle_thread = threading.Thread(target=self.obstacle_avoidance_system)
@@ -175,73 +180,141 @@ class DroneObstacleAvoidance:
         self.obstacle_thread.start()
 
     def obstacle_avoidance_system(self):
-     while True:
-        try:
-            # Measure distances from sensors
-            front_distance = measure_distance(front_sensor)
-            back_distance = measure_distance(back_sensor)
-            left_distance = measure_distance(left_sensor)
-            right_distance = measure_distance(right_sensor)
+        while True:
+            try:
+                # Check the current altitude
+                current_altitude = self.vehicle.location.global_relative_frame.alt
+                print(f"Current Altitude: {current_altitude} meters")
 
-            print(f"Front: {front_distance} cm, Back: {back_distance} cm, Left: {left_distance} cm, Right: {right_distance} cm")
+                # Activate obstacle avoidance only at target altitude (3 meters ± 0.2 meters tolerance)
+                if abs(current_altitude - self.target_altitude) > 0.2:
+                    print("Obstacle avoidance inactive - Altitude not within range.")
+                    time.sleep(0.5)  # Check again after 0.5 seconds
+                    continue
 
-            # Save the previous mode for potential restoration later
-            prev_mode = self.vehicle.mode
+                # Measure distances from sensors
+                front_distance = measure_distance(front_sensor)
+                back_distance = measure_distance(back_sensor)
+                left_distance = measure_distance(left_sensor)
+                right_distance = measure_distance(right_sensor)
 
-            # Obstacle detection flags
-            obstacle_front = front_distance < self.obstacle_prevent_distance
-            obstacle_back = back_distance < self.obstacle_prevent_distance
-            obstacle_left = left_distance < self.obstacle_prevent_distance
-            obstacle_right = right_distance < self.obstacle_prevent_distance
+                print(f"Front: {front_distance} cm, Back: {back_distance} cm, Left: {left_distance} cm, Right: {right_distance} cm")
 
-            # Decision Logic for Obstacle Avoidance
-            if (obstacle_front and obstacle_back) or (obstacle_left and obstacle_right):
-                self.ensure_guided_mode()
-                send_velocity(self.vehicle, 0, 0, 1, duration=1)
-                print("Obstacles in multiple directions - Increasing Height!")
+                # Ensure the drone is in GUIDED mode for obstacle avoidance
+                if self.vehicle.mode != VehicleMode("GUIDED"):
+                    print("Switching to GUIDED mode for obstacle avoidance")
+                    self.vehicle.mode = VehicleMode("GUIDED")
+                    while self.vehicle.mode != VehicleMode("GUIDED"):
+                        time.sleep(0.1)
 
-            else:
-                # Handle obstacles in individual directions
-                if obstacle_front and not (obstacle_back or obstacle_left or obstacle_right):
-                    self.ensure_guided_mode()
+                # Obstacle detection flags
+                obstacle_front = front_distance < self.obstacle_prevent_distance
+                obstacle_back = back_distance < self.obstacle_prevent_distance
+                obstacle_left = left_distance < self.obstacle_prevent_distance
+                obstacle_right = right_distance < self.obstacle_prevent_distance
+
+                # Decision Logic for Obstacle Avoidance
+                if (obstacle_front and obstacle_back) or (obstacle_left and obstacle_right):
+                    send_velocity(self.vehicle, 0, 0, 1, duration=1)
+                    print("Obstacles in multiple directions - Increasing Height!")
+                elif obstacle_front:
                     send_velocity(self.vehicle, -1, 0, 0, duration=1)
                     print("Obstacle detected in Front - Moving Backward!")
-
-                elif obstacle_back and not (obstacle_front or obstacle_left or obstacle_right):
-                    self.ensure_guided_mode()
+                elif obstacle_back:
                     send_velocity(self.vehicle, 1, 0, 0, duration=1)
                     print("Obstacle detected in Back - Moving Forward!")
-
-                elif obstacle_left and not (obstacle_front or obstacle_back or obstacle_right):
-                    self.ensure_guided_mode()
+                elif obstacle_left:
                     send_velocity(self.vehicle, 0, 1, 0, duration=1)
                     print("Obstacle detected on Left - Moving Right!")
-
-                elif obstacle_right and not (obstacle_front or obstacle_back or obstacle_left):
-                    self.ensure_guided_mode()
+                elif obstacle_right:
                     send_velocity(self.vehicle, 0, -1, 0, duration=1)
                     print("Obstacle detected on Right - Moving Left!")
 
-            # Restore previous mode if necessary
-            if self.vehicle.mode == VehicleMode("GUIDED") and prev_mode != VehicleMode("GUIDED"):
-                self.vehicle.mode = prev_mode
-                while self.vehicle.mode != prev_mode:
-                    time.sleep(0.1)
+                time.sleep(0.5)  # Wait half a second before the next check
+            except Exception as e:
+                print(f"Error in obstacle avoidance: {e}")
+                break
 
-            time.sleep(0.5)  # Wait half a second before the next check
-        except Exception as e:
-            print(f"Error measuring distance: {e}")
-            break
+# class DroneObstacleAvoidance:
 
-    def ensure_guided_mode(self):
-     if self.vehicle.mode != VehicleMode("GUIDED"):
-        print("Switching to GUIDED mode")
-        self.vehicle.mode = VehicleMode("GUIDED")
-        while self.vehicle.mode != VehicleMode("GUIDED"):
-            time.sleep(0.1)  # Wait until the mode change is complete
+#     def __init__(self, connection_string):
+#         # Connect to the vehicle
+#         self.vehicle = connect(connection_string, baud=921600, wait_ready=True)
+#         self.obstacle_prevent_distance = 130  # Default obstacle avoidance distance in cm
 
-    def close(self):
-        self.vehicle.close()
+#         # Start the obstacle avoidance system
+#         self.obstacle_thread = threading.Thread(target=self.obstacle_avoidance_system)
+#         self.obstacle_thread.daemon = True
+#         self.obstacle_thread.start()
+
+#     def obstacle_avoidance_system(self):
+#      while True:
+#         try:
+#             # Measure distances from sensors
+#             front_distance = measure_distance(front_sensor)
+#             back_distance = measure_distance(back_sensor)
+#             left_distance = measure_distance(left_sensor)
+#             right_distance = measure_distance(right_sensor)
+
+#             print(f"Front: {front_distance} cm, Back: {back_distance} cm, Left: {left_distance} cm, Right: {right_distance} cm")
+
+#             # Save the previous mode for potential restoration later
+#             prev_mode = self.vehicle.mode
+
+#             # Obstacle detection flags
+#             obstacle_front = front_distance < self.obstacle_prevent_distance
+#             obstacle_back = back_distance < self.obstacle_prevent_distance
+#             obstacle_left = left_distance < self.obstacle_prevent_distance
+#             obstacle_right = right_distance < self.obstacle_prevent_distance
+
+#             # Decision Logic for Obstacle Avoidance
+#             if (obstacle_front and obstacle_back) or (obstacle_left and obstacle_right):
+#                 self.ensure_guided_mode()
+#                 send_velocity(self.vehicle, 0, 0, 1, duration=1)
+#                 print("Obstacles in multiple directions - Increasing Height!")
+
+#             else:
+#                 # Handle obstacles in individual directions
+#                 if obstacle_front and not (obstacle_back or obstacle_left or obstacle_right):
+#                     self.ensure_guided_mode()
+#                     send_velocity(self.vehicle, -1, 0, 0, duration=1)
+#                     print("Obstacle detected in Front - Moving Backward!")
+
+#                 elif obstacle_back and not (obstacle_front or obstacle_left or obstacle_right):
+#                     self.ensure_guided_mode()
+#                     send_velocity(self.vehicle, 1, 0, 0, duration=1)
+#                     print("Obstacle detected in Back - Moving Forward!")
+
+#                 elif obstacle_left and not (obstacle_front or obstacle_back or obstacle_right):
+#                     self.ensure_guided_mode()
+#                     send_velocity(self.vehicle, 0, 1, 0, duration=1)
+#                     print("Obstacle detected on Left - Moving Right!")
+
+#                 elif obstacle_right and not (obstacle_front or obstacle_back or obstacle_left):
+#                     self.ensure_guided_mode()
+#                     send_velocity(self.vehicle, 0, -1, 0, duration=1)
+#                     print("Obstacle detected on Right - Moving Left!")
+
+#             # Restore previous mode if necessary
+#             if self.vehicle.mode == VehicleMode("GUIDED") and prev_mode != VehicleMode("GUIDED"):
+#                 self.vehicle.mode = prev_mode
+#                 while self.vehicle.mode != prev_mode:
+#                     time.sleep(0.1)
+
+#             time.sleep(0.5)  # Wait half a second before the next check
+#         except Exception as e:
+#             print(f"Error measuring distance: {e}")
+#             break
+
+#     def ensure_guided_mode(self):
+#      if self.vehicle.mode != VehicleMode("GUIDED"):
+#         print("Switching to GUIDED mode")
+#         self.vehicle.mode = VehicleMode("GUIDED")
+#         while self.vehicle.mode != VehicleMode("GUIDED"):
+#             time.sleep(0.1)  # Wait until the mode change is complete
+
+#     def close(self):
+#         self.vehicle.close()
 
 # Main code execution
 if __name__ == '__main__':
